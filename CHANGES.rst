@@ -4,6 +4,7 @@ Changes
 Unreleased
 ----------
 
+- Fixed ``HistoricForeignKey`` behaviour when used together with ``prefetch_related()``
 
 3.11.0 (2025-12-09)
 -------------------
