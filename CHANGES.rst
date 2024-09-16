@@ -4,59 +4,109 @@ Changes
 Unreleased
 ----------
 
+**New features:**
+
+
+**Breaking changes:**
+
+
+**Bug fixes:**
+
 - Fixed the behavior of ``HistoricForeignKey`` when used together with
   ``prefetch_related()``, which caused some related objects to be missing (gh-1152)
+
+**Other changes:**
+
+
 
 3.12.0 (2026-06-22)
 -------------------
 
+**New features:**
+
 - Added support for Django 6.1 (gh-1611)
+
 
 3.11.0 (2025-12-09)
 -------------------
 
+**New features:**
+
 - Added support for Python 3.14 (gh-1529)
 - Added support for Django 6.0 (gh-1529)
-- Dropped support for Python 3.9, which reached end-of-life on 2025-10-31 (gh-1560)
 - Added Ukrainian localization (gh-1547)
+
+**Breaking changes:**
+
+- Dropped support for Python 3.9, which reached end-of-life on 2025-10-31 (gh-1560)
+
 
 3.10.1 (2025-06-20)
 -------------------
 
+**Development:**
+
 - Fixed changelog syntax to support PyPI packaging (gh-1499)
+
 
 3.10.0 (2025-06-20)
 -------------------
 
+**Breaking changes:**
+
 - Tests are no longer bundled in released wheels (gh-1478)
+
+**Other changes:**
+
 - Move repository to the Django Commons organization (gh-1391)
+
 
 3.9.0 (2025-01-26)
 ------------------
 
+**Breaking changes:**
+
 - Removed the ``simple_history_admin_list.display_list()`` template tag that was
   deprecated in version 3.6.0 (gh-1444)
+
 
 3.8.0 (2025-01-23)
 ------------------
 
+**New features:**
+
 - Made ``skip_history_when_saving`` work when creating an object - not just when
   updating an object (gh-1262)
-- Improved performance of the ``latest_of_each()`` history manager method (gh-1360)
-- Fixed issue with deferred fields causing DoesNotExist error (gh-678)
 - Added HistoricOneToOneField (gh-1394)
-- Updated all djangoproject.com links to reference the stable version (gh-1420)
-- Dropped support for Python 3.8, which reached end-of-life on 2024-10-07 (gh-1421)
 - Added support for Django 5.1 (gh-1388)
 - Added pagination to ``SimpleHistoryAdmin`` (gh-1277)
-- Fixed issue with history button not working when viewing historical entries in the
-  admin (gh-527)
 - Added support for Django 5.2 (gh-1441)
+
+**Breaking changes:**
+
+- Dropped support for Python 3.8, which reached end-of-life on 2024-10-07 (gh-1421)
+
+**Deprecations:**
+
 - ``simple_history_admin_list.display_list()`` *was planned to be removed in this
   release, but it was overlooked, and will instead be removed in 3.9.0*
 
+**Bug fixes:**
+
+- Fixed issue with deferred fields causing DoesNotExist error (gh-678)
+- Fixed issue with history button not working when viewing historical entries in the
+  admin (gh-527)
+
+**Other changes:**
+
+- Improved performance of the ``latest_of_each()`` history manager method (gh-1360)
+- Updated all djangoproject.com links to reference the stable version (gh-1420)
+
+
 3.7.0 (2024-05-29)
 ------------------
+
+**Breaking changes:**
 
 - Dropped support for Django 3.2, which reached end-of-life on 2024-04-01 (gh-1344)
 - Removed the temporary requirement on ``asgiref>=3.6`` added in 3.5.0,
@@ -67,101 +117,156 @@ Unreleased
 - Added ``django>=4.2`` as an installation dependency, to mirror the minimum version
   tested in our CI (gh-1349)
 
+
 3.6.0 (2024-05-26)
 ------------------
 
+**New features:**
+
 - Support custom History ``Manager`` and ``QuerySet`` classes (gh-1280)
-- Renamed the (previously internal) admin template
-  ``simple_history/_object_history_list.html`` to
-  ``simple_history/object_history_list.html``, and added the field
-  ``SimpleHistoryAdmin.object_history_list_template`` for overriding it (gh-1128)
-- Deprecated the undocumented template tag ``simple_history_admin_list.display_list()``;
-  it will be removed in version 3.8 (gh-1128)
 - Added ``SimpleHistoryAdmin.get_history_queryset()`` for overriding which ``QuerySet``
   is used to list the historical records (gh-1128)
 - Added ``SimpleHistoryAdmin.get_history_list_display()`` which returns
   ``history_list_display`` by default, and made the latter into an actual field (gh-1128)
-- ``ModelDelta`` and ``ModelChange`` (in ``simple_history.models``) are now immutable
-  dataclasses; their signatures remain unchanged (gh-1128)
-- ``ModelDelta``'s ``changes`` and ``changed_fields`` are now sorted alphabetically by
-  field name. Also, if ``ModelChange`` is for an M2M field, its ``old`` and ``new``
-  lists are sorted by the related object. This should help prevent flaky tests. (gh-1128)
 - ``diff_against()`` has a new keyword argument, ``foreign_keys_are_objs``;
   see usage in the docs under "History Diffing" (gh-1128)
 - Added a "Changes" column to ``SimpleHistoryAdmin``'s object history table, listing
   the changes between each historical record of the object; see the docs under
   "Customizing the History Admin Templates" for overriding its template context (gh-1128)
+
+**Breaking changes:**
+
+- Renamed the (previously internal) admin template
+  ``simple_history/_object_history_list.html`` to
+  ``simple_history/object_history_list.html``, and added the field
+  ``SimpleHistoryAdmin.object_history_list_template`` for overriding it (gh-1128)
+- ``ModelDelta`` and ``ModelChange`` (in ``simple_history.models``) are now immutable
+  dataclasses; their signatures remain unchanged (gh-1128)
+- ``ModelDelta``'s ``changes`` and ``changed_fields`` are now sorted alphabetically by
+  field name. Also, if ``ModelChange`` is for an M2M field, its ``old`` and ``new``
+  lists are sorted by the related object. This should help prevent flaky tests. (gh-1128)
+
+**Deprecations:**
+
+- Deprecated the undocumented template tag ``simple_history_admin_list.display_list()``;
+  it will be removed in version 3.8 (gh-1128)
+
+**Bug fixes:**
+
 - Fixed the setting ``SIMPLE_HISTORY_ENABLED = False`` not preventing M2M historical
   records from being created (gh-1328)
+
+**Other changes:**
+
 - For history-tracked M2M fields, adding M2M objects (using ``add()`` or ``set()``)
   used to cause a number of database queries that scaled linearly with the number of
   objects; this has been fixed to now be a constant number of queries (gh-1333)
 
+
 3.5.0 (2024-02-19)
 ------------------
 
-- Fixed ``FieldError`` when creating historical records for many-to-many fields with
-  ``to="self"`` (gh-1218)
+**New features:**
+
 - Allow ``HistoricalRecords.m2m_fields`` as str (gh-1243)
-- Fixed ``HistoryRequestMiddleware`` deleting non-existent
-  ``HistoricalRecords.context.request`` in very specific circumstances (gh-1256)
 - Added ``custom_historical_attrs`` to ``bulk_create_with_history()`` and
   ``bulk_update_with_history()`` for setting additional fields on custom history models
   (gh-1248)
 - Passing an empty list as the ``fields`` argument to ``bulk_update_with_history()`` is
   now allowed; history records will still be created (gh-1248)
-- Added temporary requirement on ``asgiref>=3.6`` while the minimum required Django
-  version is lower than 4.2 (gh-1261)
-- Small performance optimization of the ``clean-duplicate_history`` command (gh-1015)
 - Support Simplified Chinese translation (gh-1281)
 - Added support for Django 5.0 (gh-1283)
 - Added support for Python 3.13 (gh-1289)
 
+**Breaking changes:**
+
+- Added temporary requirement on ``asgiref>=3.6`` while the minimum required Django
+  version is lower than 4.2 (gh-1261)
+
+**Bug fixes:**
+
+- Fixed ``FieldError`` when creating historical records for many-to-many fields with
+  ``to="self"`` (gh-1218)
+- Fixed ``HistoryRequestMiddleware`` deleting non-existent
+  ``HistoricalRecords.context.request`` in very specific circumstances (gh-1256)
+
+**Other changes:**
+
+- Small performance optimization of the ``clean-duplicate_history`` command (gh-1015)
+
+
 3.4.0 (2023-08-18)
 ------------------
 
-- Fixed typos in the docs
+**New features:**
+
 - Added feature to evaluate ``history`` model permissions explicitly when
   ``SIMPLE_HISTORY_ENFORCE_HISTORY_MODEL_PERMISSIONS`` is set to ``True``
   in ``settings`` (gh-1017).
-- Fixed ``SimpleHistoryAdmin`` not properly integrating with custom user models (gh-1177)
 - Support Indonesian translation (gh-1198)
 - Support Urdu translation (gh-1199)
 - Support Norwegian Bokmål translation (gh-1210)
-- Dropped support for Python 3.7, which reached end-of-life on 2023-06-27 (gh-1202)
-- Dropped support for Django 4.0, which reached end-of-life on 2023-04-01 (gh-1202)
 - Added support for Django 4.2 (gh-1202)
 - Made ``bulk_update_with_history()`` return the number of model rows updated (gh-1206)
+- Made ``HistoryRequestMiddleware`` async-capable (gh-1209)
+
+**Breaking changes:**
+
+- Dropped support for Python 3.7, which reached end-of-life on 2023-06-27 (gh-1202)
+- Dropped support for Django 4.0, which reached end-of-life on 2023-04-01 (gh-1202)
+
+**Bug fixes:**
+
+- Fixed ``SimpleHistoryAdmin`` not properly integrating with custom user models (gh-1177)
 - Fixed ``HistoryRequestMiddleware`` not cleaning up after itself (i.e. deleting
   ``HistoricalRecords.context.request``) under some circumstances (gh-1188)
-- Made ``HistoryRequestMiddleware`` async-capable (gh-1209)
 - Fixed error when setting ``table_name`` with ``inherit=True`` (gh-1195)
+
+**Other changes:**
+
+- Fixed typos in the docs
+
 
 3.3.0 (2023-03-08)
 ------------------
 
+**New features:**
+
 - Made it possible to use the new ``m2m_fields`` with model inheritance (gh-1042)
 - Added two signals: ``pre_create_historical_m2m_records`` and ``post_create_historical_m2m_records`` (gh-1042)
 - Added ``tracked_fields`` attribute to historical models (gh-1038)
-- Fixed ``KeyError`` when running ``clean_duplicate_history`` on models with ``excluded_fields`` (gh-1038)
 - Added support for Python 3.11 (gh-1053)
 - Added Arabic translations (gh-1056)
-- Fixed a code example under "Tracking many to many relationships" (gh-1069)
 - Added a ``--base-manager`` option to the ``clean_duplicate_history`` management command (gh-1115)
+
+**Bug fixes:**
+
+- Fixed ``KeyError`` when running ``clean_duplicate_history`` on models with ``excluded_fields`` (gh-1038)
+
+**Other changes:**
+
+- Fixed a code example under "Tracking many to many relationships" (gh-1069)
+
 
 3.2.0 (2022-09-28)
 ------------------
 
+**New features:**
+
+- Add basic support for many-to-many fields (gh-399)
+- Added support for Django 4.1 (gh-1021)
+
+**Other changes:**
+
 - Fixed typos in the docs
 - Removed n+1 query from ``bulk_create_with_history`` utility (gh-975)
 - Started using ``exists`` query instead of ``count`` in ``populate_history`` command (gh-982)
-- Add basic support for many-to-many fields (gh-399)
-- Added support for Django 4.1 (gh-1021)
+
 
 3.1.1 (2022-04-23)
 ------------------
 
-Full list of changes:
+**Other changes:**
 
 - Fix py36 references in pyproject.toml (gh-960)
 - Fix local setup.py install versioning issue (gh-960)
@@ -171,65 +276,79 @@ Full list of changes:
 3.1.0 (2022-04-09)
 ------------------
 
-Breaking Changes:
+**New features:**
+
+- Added queryset-based filtering with ``as_of`` (gh-397)
+- Added index on ``history_date`` column; opt-out with setting ``SIMPLE_HISTORY_DATE_INDEX`` (gh-565)
+- RecordModels now support a ``no_db_index`` setting, to drop indices in historical models,
+  default stays the same (gh-720)
+- Support ``included_fields`` for ``history.diff_against`` (gh-776)
+- Added ``excluded_field_kwargs`` to support custom ``OneToOneField`` that have
+  additional arguments that don't exist on ``ForeignKey``. (gh-870)
+- Added Czech translations (gh-885)
+- Russian translations update (gh-897)
+- Added support for Django 4.0 (gh-898)
+- Added Python 3.10 to test matrix (gh-899)
+- Added HistoricForeignKey (gh-940)
+- Support change reason formula feature. Change reason formula can be defined by overriding
+  ``get_change_reason_for_object`` method after subclassing ``HistoricalRecords`` (gh-962)
+
+**Breaking changes:**
 
 - Dropped support for Django 2.2 (gh-968)
 - Dropped support for Django 3.1 (gh-952)
 - Dropped support for Python 3.6, which reached end-of-life on 2021-12-23 (gh-946)
 
-Upgrade Implications:
+**Upgrade instructions:**
 
-- Run `makemigrations` after upgrading to realize the benefit of indexing changes.
+- Run ``makemigrations`` after upgrading to realize the benefit of indexing changes.
 
-Full list of changes:
+**Bug fixes:**
 
-- Added queryset-based filtering with ``as_of`` (gh-397)
-- Added index on `history_date` column; opt-out with setting `SIMPLE_HISTORY_DATE_INDEX` (gh-565)
-- RecordModels now support a ``no_db_index`` setting, to drop indices in historical models,
-  default stays the same (gh-720)
-- Support ``included_fields`` for ``history.diff_against`` (gh-776)
+- Fixed ``update_change_reason`` in pk (gh-806)
+- Fixed bug where serializer of djangorestframework crashed if used with ``OrderingFilter`` (gh-821)
+- Fixed bug where latest() is not idempotent for identical ``history_date`` records (gh-861)
+- Fix bug with ``history.diff_against`` with non-editable fields (gh-923)
+
+**Other changes:**
+
 - Improve performance of ``history.diff_against`` by reducing number of queries to 0 in most cases (gh-776)
 - Fixed ``prev_record`` and ``next_record`` performance when using ``excluded_fields`` (gh-791)
-- Fixed `update_change_reason` in pk (gh-806)
-- Fixed bug where serializer of djangorestframework crashed if used with ``OrderingFilter`` (gh-821)
-- Fixed `make format` so it works by using tox (gh-859)
-- Fixed bug where latest() is not idempotent for identical ``history_date`` records (gh-861)
-- Added ``excluded_field_kwargs`` to support custom ``OneToOneField`` that have
-  additional arguments that don't exist on ``ForeignKey``. (gh-870)
-- Added Czech translations (gh-885)
+
+**Development:**
+
+- Fixed ``make format`` so it works by using tox (gh-859)
 - Added ability to break into debugger on unit test failure (gh-890)
 - Added pre-commit for better commit quality (gh-896)
-- Russian translations update (gh-897)
-- Added support for Django 4.0 (gh-898)
-- Added Python 3.10 to test matrix (gh-899)
-- Fix bug with ``history.diff_against`` with non-editable fields (gh-923)
-- Added HistoricForeignKey (gh-940)
-- Support change reason formula feature. Change reason formula can be defined by overriding
-  ``get_change_reason_for_object`` method after subclassing ``HistoricalRecords`` (gh-962)
 
 
 3.0.0 (2021-04-16)
 ------------------
 
-Breaking changes:
+**New features:**
 
-- Removed support for Django 3.0
-- Removed `changeReason` in favor of `_change_reason` (see 2.10.0)
+- Add Python 3.9 support (gh-745)
+- Add Django 3.2 support (gh-817)
+- Support ``ignore_conflicts`` in ``bulk_create_with_history`` (gh-733)
+- Improve French translations (gh-811)
 
-Full list of changes:
+**Breaking changes:**
 
 - Removed support for Django versions prior to 2.2 (gh-652)
-- Migrate from TravisCI to Github Actions (gh-739)
-- Add Python 3.9 support (gh-745)
-- Support ``ignore_conflicts`` in ``bulk_create_with_history`` (gh-733)
+- Removed support for Django 3.0 (gh-817)
+- Removed ``changeReason`` in favor of ``_change_reason`` - see 2.10.0 (gh-819)
+
+**Other changes:**
+
 - Use ``asgiref`` when available instead of thread locals (gh-747)
-- Sort imports with isort (gh-751)
 - Queryset ``history.as_of`` speed improvements by calculating in the DB (gh-758)
-- Increase `black` and `isort` python version to 3.6 (gh-817)
-- Remove Django 3.0 support (gh-817)
-- Add Django 3.2 support (gh-817)
-- Improve French translations (gh-811)
-- Remove support for changeReason (gh-819)
+
+**Development:**
+
+- Migrate from TravisCI to Github Actions (gh-739)
+- Sort imports with isort (gh-751)
+- Increase ``black`` and ``isort`` python version to 3.6 (gh-817)
+
 
 2.12.0 (2020-10-14)
 -------------------
