@@ -73,6 +73,7 @@ from ..models import (
     InheritedRestaurant,
     Library,
     ManyToManyModelOther,
+    ModelWithAllNoDBIndex,
     ModelWithCustomAttrOneToOneField,
     ModelWithExcludedManyToMany,
     ModelWithFkToModelWithHistoryUsingBaseModelDb,
@@ -2709,6 +2710,27 @@ class ModelWithSingleNoDBIndexUniqueTest(TestCase):
         # keeps index
         self.assertTrue(self.model._meta.get_field("name_keeps_index").db_index)
         self.assertTrue(self.history_model._meta.get_field("name_keeps_index").db_index)
+
+
+class ModelWithAllNoDBIndexTest(TestCase):
+    def setUp(self):
+        self.model = ModelWithAllNoDBIndex
+        self.history_model = self.model.history.model
+
+    def test_field_indices(self):
+        """
+        All the indexed fields in the original model should be
+        non-indexed in the history model.
+        """
+        for field in ["name", "fk"]:
+            # dropped index
+            self.assertTrue(self.model._meta.get_field(field).db_index)
+            self.assertFalse(self.history_model._meta.get_field(field).db_index)
+
+        # no index
+        no_index = "name_no_index"
+        self.assertFalse(self.model._meta.get_field(no_index).db_index)
+        self.assertFalse(self.history_model._meta.get_field(no_index).db_index)
 
 
 class HistoricForeignKeyTest(TestCase):
