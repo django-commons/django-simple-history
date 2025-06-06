@@ -67,7 +67,11 @@ class Command(BaseCommand):
             if self.verbosity >= 1:
                 self.stdout.write(self.COMMAND_HINT)
 
-        self._process(to_process, batch_size=options["batchsize"], default_date=options["default_date"])
+        self._process(
+            to_process,
+            batch_size=options["batchsize"],
+            default_date=options["default_date"],
+        )
 
     def _auto_models(self):
         to_process = set()
@@ -143,7 +147,9 @@ class Command(BaseCommand):
             # creating them. So we only keep batch_size worth of models in
             # historical_instances and clear them after we hit batch_size
             if index % batch_size == 0:
-                history.bulk_history_create(instances, batch_size=batch_size, default_date=default_date)
+                history.bulk_history_create(
+                    instances, batch_size=batch_size, default_date=default_date
+                )
 
                 instances = []
 
@@ -159,7 +165,9 @@ class Command(BaseCommand):
 
         # create any we didn't get in the last loop
         if instances:
-            history.bulk_history_create(instances, batch_size=batch_size, default_date=default_date)
+            history.bulk_history_create(
+                instances, batch_size=batch_size, default_date=default_date
+            )
 
     def _process(self, to_process, batch_size, default_date=None):
         for model, history_model in to_process:
