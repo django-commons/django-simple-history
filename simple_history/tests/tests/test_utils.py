@@ -656,4 +656,3 @@ class UpdateChangeReasonTestCase(TestCase):
         update_change_reason(poll, "Test change reason.")
         most_recent = poll.history.order_by("-history_date").first()
         self.assertEqual(most_recent.history_change_reason, "Test change reason.")
-
