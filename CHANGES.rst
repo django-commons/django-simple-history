@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - Tests are no longer bundled in released wheels (gh-1478)
+- Added ``--default-date`` option to ``populate_history`` command (gh-688)
 
 3.9.0 (2025-01-26)
 ------------------

@@ -199,7 +199,11 @@ class TestPopulateHistory(TestCase):
         Poll.objects.create(question="Will this populate?", pub_date=datetime.now())
         Poll.history.all().delete()
         management.call_command(
-            self.command_name, auto=True, default_date=date, stdout=StringIO(), stderr=StringIO()
+            self.command_name,
+            auto=True,
+            default_date=date,
+            stdout=StringIO(),
+            stderr=StringIO(),
         )
         self.assertEqual(Poll.history.all().count(), 1)
         self.assertEqual(Poll.history.all()[0].history_date, date)
