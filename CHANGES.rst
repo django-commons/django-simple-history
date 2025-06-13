@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - Tests are no longer bundled in released wheels (gh-1478)
+- Move repository to the Django Commons organization (gh-1391)
 
 3.9.0 (2025-01-26)
 ------------------
