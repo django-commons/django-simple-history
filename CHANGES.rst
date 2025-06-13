@@ -4,6 +4,18 @@ Changes
 Unreleased
 ----------
 
+- Tests are no longer bundled in released wheels (gh-1478)
+- Move repository to the Django Commons organization (gh-1391)
+
+3.9.0 (2025-01-26)
+------------------
+
+- Removed the ``simple_history_admin_list.display_list()`` template tag that was
+  deprecated in version 3.6.0 (gh-1444)
+
+3.8.0 (2025-01-23)
+------------------
+
 - Made ``skip_history_when_saving`` work when creating an object - not just when
   updating an object (gh-1262)
 - Improved performance of the ``latest_of_each()`` history manager method (gh-1360)
@@ -15,7 +27,9 @@ Unreleased
 - Added pagination to ``SimpleHistoryAdmin`` (gh-1277)
 - Fixed issue with history button not working when viewing historical entries in the
   admin (gh-527)
-- Move repository to the Django Commons organization (gh-1391)
+- Added support for Django 5.2 (gh-1441)
+- ``simple_history_admin_list.display_list()`` *was planned to be removed in this
+  release, but it was overlooked, and will instead be removed in 3.9.0*
 
 3.7.0 (2024-05-29)
 ------------------

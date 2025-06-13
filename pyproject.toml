@@ -22,6 +22,8 @@ classifiers = [
   "Framework :: Django",
   "Framework :: Django :: 4.2",
   "Framework :: Django :: 5.0",
+  "Framework :: Django :: 5.1",
+  "Framework :: Django :: 5.2",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: BSD License",
   "Programming Language :: Python",
@@ -56,6 +58,10 @@ local_scheme = "node-and-date"
 [tool.hatch.build.targets.wheel]
 packages = [
   "simple_history",
+]
+exclude = [
+  "simple_history/registry_tests",
+  "simple_history/tests",
 ]
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
