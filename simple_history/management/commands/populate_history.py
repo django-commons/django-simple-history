@@ -42,6 +42,13 @@ class Command(BaseCommand):
             type=int,
             help="Set a custom batch size when bulk inserting historical records.",
         )
+        parser.add_argument(
+            "--default-date",
+            action="store",
+            dest="default_date",
+            default=None,
+            help="Set a custom date for the historical records.",
+        )
 
     def handle(self, *args, **options):
         self.verbosity = options["verbosity"]
@@ -60,7 +67,11 @@ class Command(BaseCommand):
             if self.verbosity >= 1:
                 self.stdout.write(self.COMMAND_HINT)
 
-        self._process(to_process, batch_size=options["batchsize"])
+        self._process(
+            to_process,
+            batch_size=options["batchsize"],
+            default_date=options["default_date"],
+        )
 
     def _auto_models(self):
         to_process = set()
@@ -109,11 +120,12 @@ class Command(BaseCommand):
             raise ValueError(msg)
         return model, history_model
 
-    def _bulk_history_create(self, model, batch_size):
+    def _bulk_history_create(self, model, batch_size, default_date=None):
         """Save a copy of all instances to the historical model.
 
         :param model: Model you want to bulk create
         :param batch_size: number of models to create at once.
+        :param default_date: date to set for the historical records.
         :return:
         """
 
@@ -135,7 +147,9 @@ class Command(BaseCommand):
             # creating them. So we only keep batch_size worth of models in
             # historical_instances and clear them after we hit batch_size
             if index % batch_size == 0:
-                history.bulk_history_create(instances, batch_size=batch_size)
+                history.bulk_history_create(
+                    instances, batch_size=batch_size, default_date=default_date
+                )
 
                 instances = []
 
@@ -151,9 +165,11 @@ class Command(BaseCommand):
 
         # create any we didn't get in the last loop
         if instances:
-            history.bulk_history_create(instances, batch_size=batch_size)
+            history.bulk_history_create(
+                instances, batch_size=batch_size, default_date=default_date
+            )
 
-    def _process(self, to_process, batch_size):
+    def _process(self, to_process, batch_size, default_date=None):
         for model, history_model in to_process:
             if history_model.objects.exists():
                 self.stderr.write(
@@ -164,6 +180,6 @@ class Command(BaseCommand):
                 continue
             if self.verbosity >= 1:
                 self.stdout.write(self.START_SAVING_FOR_MODEL.format(model=model))
-            self._bulk_history_create(model, batch_size)
+            self._bulk_history_create(model, batch_size, default_date)
             if self.verbosity >= 1:
                 self.stdout.write(self.DONE_SAVING_FOR_MODEL.format(model=model))
