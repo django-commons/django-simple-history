@@ -5,6 +5,7 @@ Unreleased
 ----------
 
 - Tests are no longer bundled in released wheels (gh-1478)
+- Move repository to the Django Commons organization (gh-1391)
 
 3.9.0 (2025-01-26)
 ------------------
@@ -29,7 +30,6 @@ Unreleased
 - Added support for Django 5.2 (gh-1441)
 - ``simple_history_admin_list.display_list()`` *was planned to be removed in this
   release, but it was overlooked, and will instead be removed in 3.9.0*
-- Move repository to the Django Commons organization (gh-1391)
 
 3.7.0 (2024-05-29)
 ------------------
