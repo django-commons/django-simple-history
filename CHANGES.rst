@@ -4,9 +4,13 @@ Changes
 Unreleased
 ----------
 
+3.10.1 (2025-06-20)
+-------------------
+
+- Fixed changelog syntax to support PyPI packaging.
 
 3.10.0 (2025-06-20)
-------------------
+-------------------
 
 - Tests are no longer bundled in released wheels (gh-1478)
 - Move repository to the Django Commons organization (gh-1391)
