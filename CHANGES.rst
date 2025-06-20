@@ -7,7 +7,7 @@ Unreleased
 3.10.1 (2025-06-20)
 -------------------
 
-- Fixed changelog syntax to support PyPI packaging.
+- Fixed changelog syntax to support PyPI packaging (gh-1499)
 
 3.10.0 (2025-06-20)
 -------------------
