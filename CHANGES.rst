@@ -4,6 +4,11 @@ Changes
 Unreleased
 ----------
 
+3.10.2 (2025-07-15)
+-------------------
+
+- Add autodiscover mechanism to automatically register historical models from a single centralized location
+
 3.10.1 (2025-06-20)
 -------------------
 
