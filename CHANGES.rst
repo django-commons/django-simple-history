@@ -7,7 +7,7 @@ Unreleased
 3.10.2 (2025-07-15)
 -------------------
 
-- Add autodiscover mechanism to automatically register historical models from a single centralized location (gh-1504)
+- Add autodiscovery mechanism to auto-register models in historical.py (gh-1504)
 
 3.10.1 (2025-06-20)
 -------------------

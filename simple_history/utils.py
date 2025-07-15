@@ -257,7 +257,7 @@ def autodiscover_history_modules():
         try:
             import_module(module)
         except ImportError:
+            # Only re-raise if the module exists but failed to import
+            # Silently ignore if the module doesn't exist, as expected
             if module_has_submodule(app_config.module, "historical"):
                 raise
-        except Exception:
-            raise
