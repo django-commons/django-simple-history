@@ -39,4 +39,4 @@ def register(
     records.finalize(model)
 
 
-default_app_config = 'simple_history.apps.SimpleHistoryConfig'
+default_app_config = "simple_history.apps.SimpleHistoryConfig"

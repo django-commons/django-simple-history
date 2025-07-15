@@ -250,8 +250,7 @@ def autodiscover_history_modules():
     Typically called at app startup.
     """
     from django.apps import apps
-    from django.utils.module_loading import import_module
-    from django.utils.module_loading import module_has_submodule
+    from django.utils.module_loading import import_module, module_has_submodule
 
     for app_config in apps.get_app_configs():
         module = f"{app_config.name}.historical"
