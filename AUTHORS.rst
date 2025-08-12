@@ -147,6 +147,7 @@ Authors
 - `Sridhar Marella <https://github.com/sridhar562345>`_
 - `Mattia Fantoni <https://github.com/MattFanto>`_
 - `Trent Holliday <https://github.com/trumpet2012>`_
+- `Remigio Furini <https://github.com/remifu93>`_
 
 Background
 ==========

@@ -37,3 +37,6 @@ def register(
     records.cls = model
     records.add_extra_methods(model)
     records.finalize(model)
+
+
+default_app_config = "simple_history.apps.SimpleHistoryConfig"

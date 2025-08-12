@@ -4,6 +4,11 @@ Changes
 Unreleased
 ----------
 
+3.10.2 (2025-07-15)
+-------------------
+
+- Add autodiscovery mechanism to auto-register models in historical.py (gh-1504)
+
 3.10.1 (2025-06-20)
 -------------------
 

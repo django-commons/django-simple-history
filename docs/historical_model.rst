@@ -566,3 +566,23 @@ You will see the many to many changes when diffing between two historical record
 
     # Output:
     # categories changed from [{'poll': 1, 'category': 1}, { 'poll': 1, 'category': 2}] to [{'poll': 1, 'category': 2}]
+
+Organizing history registrations with `historical.py`
+-----------------------------------
+To keep your project clean and maintainable, place all your `register()` calls
+inside a dedicated `historical.py` file within each app.
+
+With the autodiscover feature, `simple_history` automatically imports these
+modules at Django startup, so you don’t need to manually import or register
+your historical models elsewhere.
+
+.. code-block:: python
+
+    # myapp/historical.py
+
+    from simple_history import register
+    from .models import Product
+
+
+    # Register models to track their history
+    register(Product, inherit=True)
