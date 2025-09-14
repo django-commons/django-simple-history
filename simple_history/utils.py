@@ -241,3 +241,23 @@ def get_change_reason_from_object(obj):
         return getattr(obj, "_change_reason")
 
     return None
+
+
+def autodiscover_history_modules():
+    """
+    Auto-import `<app>.historical` modules and fail silently if not present.
+    This triggers simple_history.register(...) calls inside those modules.
+    Typically called at app startup.
+    """
+    from django.apps import apps
+    from django.utils.module_loading import import_module, module_has_submodule
+
+    for app_config in apps.get_app_configs():
+        module = f"{app_config.name}.historical"
+        try:
+            import_module(module)
+        except ImportError:
+            # Only re-raise if the module exists but failed to import
+            # Silently ignore if the module doesn't exist, as expected
+            if module_has_submodule(app_config.module, "historical"):
+                raise
