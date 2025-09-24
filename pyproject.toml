@@ -86,6 +86,9 @@ target-version = [
 profile = "black"
 py_version = "39"
 
+[tool.codespell]
+skip = "AUTHORS.rst,*.po"
+
 [tool.coverage.run]
 parallel = true
 branch = true

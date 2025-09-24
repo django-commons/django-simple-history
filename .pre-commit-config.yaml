@@ -12,6 +12,13 @@ repos:
       - id: black
         language_version: python3.9
 
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell # See pyproject.toml for args
+        additional_dependencies:
+          - tomli
+
   - repo: https://github.com/pycqa/flake8
     rev: 7.2.0
     hooks:
