@@ -672,7 +672,7 @@ class HistoricalRecords:
 
     def pre_delete(self, instance, **kwargs):
         """
-        pre_delete method to ensure all deferred fileds are loaded on the model
+        pre_delete method to ensure all deferred fields are loaded on the model
         """
         # First check that history is enabled (on model and globally)
         if not getattr(settings, "SIMPLE_HISTORY_ENABLED", True):
