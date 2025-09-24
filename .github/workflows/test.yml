@@ -133,7 +133,7 @@ jobs:
           # Install this project in editable mode, so that its package metadata can be queried
           pip install --editable .
           # Install the latest minor version of Django we support
-          pip install Django==6.0
+          pip install --pre Django>=6.0a1
 
       - name: Check translation files are updated
         run: python -m simple_history.tests.generated_file_checks.check_translations
