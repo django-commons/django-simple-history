@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
         django-version: ['4.2', '5.0', '5.1', '5.2', 'main']
 
         exclude:
@@ -73,6 +73,7 @@ jobs:
             pyproject.toml
             tox.ini
             requirements/*.txt
+          allow-prereleases: true
 
       - name: Install dependencies
         run: |
@@ -107,7 +108,7 @@ jobs:
       - name: Set up newest stable Python version
         uses: actions/setup-python@v6
         with:
-          python-version: 3.13
+          python-version: 3.x
           cache: 'pip'
           # Invalidate the cache when this file updates, as the dependencies' versions
           # are pinned in the step below
@@ -117,9 +118,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # Install this project in editable mode, so that its package metadata can be queried
-          pip install -e .
+          pip install --editable .
           # Install the latest minor version of Django we support
-          pip install Django==5.1
+          pip install Django==5.2
 
       - name: Check translation files are updated
         run: python -m simple_history.tests.generated_file_checks.check_translations
