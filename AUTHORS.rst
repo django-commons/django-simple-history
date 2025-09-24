@@ -27,6 +27,7 @@ Authors
 - Brian Mesick (`bmedx <https://github.com/bmedx>`_)
 - Buddy Lindsey, Jr.
 - Carlos San Emeterio (`Carlos-San-Emeterio <https://github.com/Carlos-San-Emeterio>`_)
+- Christian Clauss (`cclauss <https://github.com/cclauss>`_)
 - Christopher Broderick (`uhurusurfa <https://github.com/uhurusurfa>`_)
 - Christopher Johns (`tyrantwave <https://github.com/tyrantwave>`_)
 - Conrad (`creyD <https://github.com/creyD>`_)
