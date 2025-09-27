@@ -3,6 +3,7 @@ Changes
 
 Unreleased
 ----------
+- Added ``--default-date`` option to ``populate_history`` command (gh-688)
 
 - Added support for Python 3.14
 - Added support for Django 6.0
