@@ -19,6 +19,7 @@ Authors
 - Anton Kulikov (`bigtimecriminal <https://github.com/bigtimecriminal>`_)
 - Ben Lawson (`blawson <https://github.com/blawson>`_)
 - Benjamin Mampaey (`bmampaey <https://github.com/bmampaey>`_)
+- Benjamin Skov Kaas-Hansen (`epiben <https://github.com/epiben>`_)
 - Berke Agababaoglu (`bagababaoglu <https://github.com/bagababaoglu>`_)
 - Bheesham Persaud (`bheesham <https://github.com/bheesham>`_)
 - `bradford281 <https://github.com/bradford281>`_
@@ -43,10 +44,10 @@ Authors
 - David Smith
 - `ddabble <https://github.com/ddabble>`_
 - Dmytro Shyshov (`xahgmah <https://github.com/xahgmah>`_)
-- Edouard Richard (`vied12 <https://github.com/vied12>` _)
+- Edouard Richard (`vied12 <https://github.com/vied12>`_)
 - Eduardo Cuducos
 - Erik van Widenfelt (`erikvw <https://github.com/erikvw>`_)
-- Fábio Capuano (`fabiocapsouza <https://github.com/fabiocapsouza`_)
+- Fábio Capuano (`fabiocapsouza <https://github.com/fabiocapsouza>`_)
 - Filipe Pina (@fopina)
 - Florian Eßer
 - François Martin (`martinfrancois <https://github.com/martinfrancois>`_)

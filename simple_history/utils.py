@@ -1,3 +1,7 @@
+import os
+import time
+import uuid
+
 from django.db import transaction
 from django.db.models import Case, ForeignKey, ManyToManyField, Q, When
 from django.forms.models import model_to_dict
@@ -241,3 +245,25 @@ def get_change_reason_from_object(obj):
         return getattr(obj, "_change_reason")
 
     return None
+
+
+def uuid7():
+    """
+    Custom function to generate a UUIDv7 (time-based UUID) as per
+    https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-7.
+    NB! Although uuid.UUID() has a version parameter, we cannot set it to 7
+    as of 2025-06-07 because UUID7 isn't part of the module--it it were,
+    this function would be redundant.
+    """
+
+    # Initialise random bytearray
+    res = bytearray(os.urandom(16))
+
+    # Replace first 6 bytes (= 48 bits) with timestamp values
+    res[0:6] = (time.time_ns() // 1_000_000).to_bytes(6, "big")
+
+    # Then, set version and variant bits
+    res[6] = (res[6] & 0x0F) | 0x70
+    res[8] = (res[8] & 0x3F) | 0x80
+
+    return uuid.UUID(bytes=bytes(res))

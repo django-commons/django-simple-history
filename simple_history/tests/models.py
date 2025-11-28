@@ -797,6 +797,18 @@ class UUIDDefaultModel(models.Model):
     history = HistoricalRecords()
 
 
+# Set the SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION
+setattr(settings, "SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION", 7)
+
+
+class UUIDv7Model(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    history = HistoricalRecords()
+
+
+# Clear the SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION
+delattr(settings, "SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION")
+
 # Clear the SIMPLE_HISTORY_HISTORY_ID_USE_UUID
 delattr(settings, "SIMPLE_HISTORY_HISTORY_ID_USE_UUID")
 

@@ -429,8 +429,19 @@ class HistoricalRecords:
             history_id_field.primary_key = True
             history_id_field.editable = False
         elif getattr(settings, "SIMPLE_HISTORY_HISTORY_ID_USE_UUID", False):
+            uuid_version = getattr(
+                settings, "SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION", 4
+            )
+            if uuid_version == 4:
+                uuid_default = uuid.uuid4
+            elif uuid_version == 7:
+                uuid_default = utils.uuid7
+            else:
+                raise ImproperlyConfigured(
+                    "SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION must be either 4 or 7"
+                )
             history_id_field = models.UUIDField(
-                primary_key=True, default=uuid.uuid4, editable=False
+                primary_key=True, default=uuid_default, editable=False
             )
         else:
             history_id_field = models.AutoField(primary_key=True)
