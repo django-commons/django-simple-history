@@ -23,7 +23,6 @@ from django.http import HttpResponseRedirect
 from django.utils.html import format_html
 
 
-
 from .manager import HistoricalQuerySet, HistoryManager
 from .models import HistoricalChanges
 from .template_utils import HistoricalRecordContextHelper
@@ -389,10 +388,10 @@ class HistoricalRevertMixin:
     It provides an admin action to restore deleted objects from their historical records.
 
     Usage:
-        from visapickapply.admin_utils import HistoricalRevertMixin
+        from simple_history.admin import HistoricalRevertMixin
 
-        @admin.register(MyModel.history.model, site=custom_admin_site)
-        class HistoricalMyModelAdmin(HistoricalRevertMixin, ModelAdmin):
+        @admin.register(MyModel.history.model)
+        class HistoricalMyModelAdmin(HistoricalRevertMixin, admin.ModelAdmin):
             list_display = ("field1", "history_date", "history_type", "revert_button")
             list_filter = ("history_type",)  # Recommended for easy filtering
 
@@ -439,27 +438,18 @@ class HistoricalRevertMixin:
         """Handle the revert action triggered by the button."""
         revert_id = request.GET.get("revert_id")
 
-        print(f"[DEBUG] Restore button clicked for ID: {revert_id}")
-
         try:
             historical_record = self.model.objects.get(pk=revert_id)
-            print(f"[DEBUG] Found historical record: {historical_record}")
-            print(f"[DEBUG] History type: {historical_record.history_type}")
         except self.model.DoesNotExist:
-            print(f"[DEBUG] Historical record not found for ID: {revert_id}")
             self.message_user(
                 request,
                 "Historical record not found.",
                 messages.ERROR,
             )
-            # Redirect back without the query parameter
             return HttpResponseRedirect(request.path)
 
         # Check if this is a deletion record
         if historical_record.history_type != "-":
-            print(
-                f"[DEBUG] Not a deletion record, type is: {historical_record.history_type}"
-            )
             self.message_user(
                 request,
                 "This is not a deletion record and cannot be restored.",
@@ -469,11 +459,9 @@ class HistoricalRevertMixin:
 
         # Get the original model class
         original_model = historical_record.instance_type
-        print(f"[DEBUG] Original model: {original_model}")
 
         # Check if object already exists
         if original_model.objects.filter(pk=historical_record.id).exists():
-            print(f"[DEBUG] Object already exists with ID: {historical_record.id}")
             self.message_user(
                 request,
                 "This object has already been restored.",
@@ -483,17 +471,11 @@ class HistoricalRevertMixin:
 
         try:
             # Restore the object with its original ID
-            print(
-                f"[DEBUG] Attempting to restore object with ID: {historical_record.id}"
-            )
             restored_instance = historical_record.instance
             # Explicitly set the ID to match the historical record
             restored_instance.pk = historical_record.id
             restored_instance.id = historical_record.id
             restored_instance.save(force_insert=True)
-            print(
-                f"[DEBUG] Successfully saved restored object with ID: {restored_instance.pk}"
-            )
 
             model_name = self.model._meta.verbose_name
             self.message_user(
@@ -502,10 +484,6 @@ class HistoricalRevertMixin:
                 messages.SUCCESS,
             )
         except Exception as e:
-            print(f"[DEBUG] Error during restore: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
             self.message_user(
                 request,
                 f"Error restoring object: {str(e)}",
