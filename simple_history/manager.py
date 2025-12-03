@@ -225,33 +225,55 @@ class HistoryManager(models.Manager):
         if not getattr(settings, "SIMPLE_HISTORY_ENABLED", True):
             return
 
-        history_type = "+"
-        if update:
-            history_type = "~"
-
+        history_type = "~" if update else "+"
         historical_instances = []
+
+        tracked_fields = self.model.tracked_fields
+        tracked_field_attnames = [field.attname for field in tracked_fields]
+        has_history_relation = hasattr(self.model, "history_relation")
+
+        if default_date is None:
+            default_date_value = timezone.now()
+        else:
+            default_date_value = default_date
+
+        use_default_user = default_user is not None
+
         for instance in objs:
-            history_user = getattr(
-                instance,
-                "_history_user",
-                default_user or self.model.get_default_history_user(instance),
-            )
+            if use_default_user:
+                history_user = default_user
+            else:
+                history_user = getattr(instance, "_history_user", None)
+                if history_user is None:
+                    history_user = self.model.get_default_history_user(instance)
+
+            history_date = getattr(instance, "_history_date", None)
+            if history_date is None:
+                history_date = default_date_value
+
+            change_reason = get_change_reason_from_object(instance)
+            if not change_reason:
+                change_reason = default_change_reason
+
+            field_values = {
+                attname: getattr(instance, attname, None)
+                for attname in tracked_field_attnames
+            }
+
+            if custom_historical_attrs:
+                field_values.update(custom_historical_attrs)
+
             row = self.model(
-                history_date=getattr(
-                    instance, "_history_date", default_date or timezone.now()
-                ),
+                history_date=history_date,
                 history_user=history_user,
-                history_change_reason=get_change_reason_from_object(instance)
-                or default_change_reason,
+                history_change_reason=change_reason,
                 history_type=history_type,
-                **{
-                    field.attname: getattr(instance, field.attname)
-                    for field in self.model.tracked_fields
-                },
-                **(custom_historical_attrs or {}),
+                **field_values,
             )
-            if hasattr(self.model, "history_relation"):
+
+            if has_history_relation:
                 row.history_relation_id = instance.pk
+
             historical_instances.append(row)
 
         return self.model.objects.bulk_create(
