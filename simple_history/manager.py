@@ -237,14 +237,12 @@ class HistoryManager(models.Manager):
         else:
             default_date_value = default_date
 
-        use_default_user = default_user is not None
-
         for instance in objs:
-            if use_default_user:
-                history_user = default_user
-            else:
-                history_user = getattr(instance, "_history_user", None)
-                if history_user is None:
+            history_user = getattr(instance, "_history_user", None)
+            if history_user is None:
+                if default_user is not None:
+                    history_user = default_user
+                else:
                     history_user = self.model.get_default_history_user(instance)
 
             history_date = getattr(instance, "_history_date", None)
