@@ -6,6 +6,7 @@ Unreleased
 
 - Added support for Python 3.14
 - Added support for Django 6.0
+- Dropped support for Python 3.9
 
 3.10.1 (2025-06-20)
 -------------------

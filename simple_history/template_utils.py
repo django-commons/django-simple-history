@@ -134,7 +134,7 @@ class HistoricalRecordContextHelper:
         if all the passed elements are safe strings.
         """
 
-        def stringify_value(value: Any) -> Union[str, SafeString]:
+        def stringify_value(value: Any) -> str | SafeString:
             # If `value` is a list, stringify each element using `str()` instead of
             # `repr()` (the latter is the default when calling `list.__str__()`)
             if isinstance(value, list):
