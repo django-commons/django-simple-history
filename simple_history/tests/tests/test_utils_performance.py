@@ -170,14 +170,19 @@ class BulkUpdateWithHistoryPerformanceTestCase(TestCase):
         complex models with many tracked fields.
 
         To run with profiling:
-        python -m pyinstrument runtests.py simple_history.tests.tests.test_utils_performance.BulkUpdateWithHistoryPerformanceTestCase.test_bulk_update_with_history_profiling
+        python -m pyinstrument runtests.py \\
+            simple_history.tests.tests.test_utils_performance.\\
+            BulkUpdateWithHistoryPerformanceTestCase.\\
+            test_bulk_update_with_history_profiling
 
         Or install pyinstrument and run normally - it will skip if not available.
         """
         try:
             from pyinstrument import Profiler
         except ImportError:
-            self.skipTest("pyinstrument not installed - install with: pip install pyinstrument")
+            self.skipTest(
+                "pyinstrument not installed - install with: pip install pyinstrument"
+            )
 
         import time
 
@@ -186,7 +191,10 @@ class BulkUpdateWithHistoryPerformanceTestCase(TestCase):
         large_dataset = self.setUpLargeDataset(num_records)
 
         print(f"Updating {len(large_dataset)} records...")
-        print("Note: Testing WITHOUT default_user/default_date to show optimization benefits")
+        print(
+            "Note: Testing WITHOUT default_user/default_date to show "
+            "optimization benefits"
+        )
         for item in large_dataset:
             item.question = f"Profiled update {item.question}"
 
@@ -214,7 +222,8 @@ class BulkUpdateWithHistoryPerformanceTestCase(TestCase):
         print("=" * 70)
         print(f"Total records: {len(large_dataset)}")
         print(f"Execution time: {elapsed_time:.3f} seconds")
-        print(f"Average per record: {(elapsed_time / len(large_dataset)) * 1000:.3f} ms")
+        avg_per_record = (elapsed_time / len(large_dataset)) * 1000
+        print(f"Average per record: {avg_per_record:.3f} ms")
         print(f"Records per second: {len(large_dataset) / elapsed_time:.0f}")
         print("\nProfile breakdown:")
         print(output)
@@ -223,4 +232,3 @@ class BulkUpdateWithHistoryPerformanceTestCase(TestCase):
         self.assertEqual(
             Poll.history.filter(history_type="~").count(), len(large_dataset)
         )
-
