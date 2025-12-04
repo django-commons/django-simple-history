@@ -4,6 +4,7 @@ Changes
 Unreleased
 ----------
 
+- Optimized `bulk_history_create` performance in `bulk_update_with_history` by pre-computing values and reducing function calls (34% faster for large batches) (gh-1558)
 - Added support for Python 3.14
 - Added support for Django 6.0
 

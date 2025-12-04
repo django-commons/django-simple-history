@@ -114,6 +114,7 @@ Authors
 - Nick Träger
 - Noel James (`NoelJames <https://github.com/NoelJames>`_)
 - Ofek Lev (`ofek <https://github.com/ofek>`_)
+- `Pedro Henrique <https://github.com/pedrohenriquerls>`_
 - Phillip Marshall
 - Prakash Venkatraman (`dopatraman <https://github.com/dopatraman>`_)
 - Rajesh Pappula
