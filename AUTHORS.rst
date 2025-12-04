@@ -137,6 +137,7 @@ Authors
 - Tommy Beadle (`tbeadle <https://github.com/tbeadle>`_)
 - Trey Hunner (`treyhunner <https://github.com/treyhunner>`_)
 - Ulysses Vilela
+- Ülgen Sarıkavak (`ulgens <https://github.com/ulgens/>`_)
 - `vnagendra <https://github.com/vnagendra>`_
 - `yakimka <https://github.com/yakimka>`_
 - `Paulo Peres <https://github.com/PauloPeres>`_
