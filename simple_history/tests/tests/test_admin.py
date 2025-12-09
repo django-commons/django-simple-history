@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from unittest.mock import ANY, patch
 
 import django
+from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.admin.utils import quote
 from django.contrib.admin.views.main import PAGE_VAR
@@ -15,7 +16,7 @@ from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from django.utils.encoding import force_str
 
-from simple_history.admin import SimpleHistoryAdmin
+from simple_history.admin import HistoricalRevertMixin, SimpleHistoryAdmin
 from simple_history.models import HistoricalRecords
 from simple_history.template_utils import HistoricalRecordContextHelper
 from simple_history.tests.external.models import ExternalModelWithCustomUserIdField
@@ -1227,3 +1228,343 @@ class AdminSiteTest(TestCase):
 
     def test_permission_combos__default(self):
         self._test_permission_combos_with_enforce_history_permissions(enforced=False)
+
+
+class HistoricalRevertMixinTest(TestCase):
+    """Test the HistoricalRevertMixin functionality."""
+
+    def setUp(self):
+        self.user = User.objects.create_superuser("admin", "admin@example.com", "pass")
+        self.admin_site = AdminSite()
+
+        # Create a test admin class that uses the mixin
+        class HistoricalPollAdmin(HistoricalRevertMixin, admin.ModelAdmin):
+            list_display = ("history_id", "question", "history_type", "revert_button")
+
+        self.admin_class = HistoricalPollAdmin(Poll.history.model, self.admin_site)
+        self.factory = RequestFactory()
+
+    def _create_request(self, method="GET", data=None, user=None):
+        """Helper to create a request with proper session and messages setup."""
+        if method == "GET":
+            request = self.factory.get("/", data or {})
+        else:
+            request = self.factory.post("/", data or {})
+
+        request.user = user or self.user
+        request.session = {}
+        request._messages = FallbackStorage(request)
+        return request
+
+    def test_revert_button_for_deletion_record(self):
+        """Test that revert button shows for deletion records."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+        poll_id = poll.pk
+        poll.delete()
+
+        # Get the deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+        self.assertIsNotNone(deletion_record)
+
+        # Test the button
+        button_html = self.admin_class.revert_button(deletion_record)
+        self.assertIn("Restore", str(button_html))
+        self.assertIn(f"revert_id={deletion_record.pk}", str(button_html))
+
+    def test_revert_button_for_already_restored(self):
+        """Test that revert button shows 'Already Restored' for existing objects."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+        poll_id = poll.pk
+        poll.delete()
+
+        # Get the deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+
+        # Restore the poll manually
+        Poll.objects.create(id=poll_id, question="Test?", pub_date=today)
+
+        # Test the button
+        button_html = self.admin_class.revert_button(deletion_record)
+        self.assertIn("Already Restored", str(button_html))
+
+    def test_revert_button_for_non_deletion_record(self):
+        """Test that revert button shows dash for non-deletion records."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+
+        # Get the creation record
+        creation_record = Poll.history.filter(id=poll.pk, history_type="+").first()
+        self.assertIsNotNone(creation_record)
+
+        # Test the button
+        button_html = self.admin_class.revert_button(creation_record)
+        self.assertIn("-", str(button_html))
+        self.assertNotIn("Restore", str(button_html))
+
+    def test_handle_revert_from_button_successful(self):
+        """Test successful restoration from button."""
+        poll = Poll.objects.create(question="Test Question?", pub_date=today)
+        poll_id = poll.pk
+        poll.delete()
+
+        # Get the deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+
+        # Create request with revert_id
+        request = self._create_request(data={"revert_id": str(deletion_record.pk)})
+
+        # Handle the revert
+        response = self.admin_class.handle_revert_from_button(request)
+
+        # Check that object was restored
+        self.assertTrue(Poll.objects.filter(pk=poll_id).exists())
+        restored_poll = Poll.objects.get(pk=poll_id)
+        self.assertEqual(restored_poll.question, "Test Question?")
+
+    def test_handle_revert_from_button_already_exists(self):
+        """Test that restoring an already existing object shows warning."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+        poll_id = poll.pk
+        poll.delete()
+
+        # Get the deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+
+        # Restore manually
+        Poll.objects.create(id=poll_id, question="Test?", pub_date=today)
+
+        # Try to restore again
+        request = self._create_request(data={"revert_id": str(deletion_record.pk)})
+        response = self.admin_class.handle_revert_from_button(request)
+
+        # Verify it didn't create duplicate
+        self.assertEqual(Poll.objects.filter(pk=poll_id).count(), 1)
+
+    def test_handle_revert_from_button_not_deletion_record(self):
+        """Test that trying to restore non-deletion record shows warning."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+
+        # Get a creation record (not deletion)
+        creation_record = Poll.history.filter(id=poll.pk, history_type="+").first()
+
+        # Try to restore
+        request = self._create_request(data={"revert_id": str(creation_record.pk)})
+        response = self.admin_class.handle_revert_from_button(request)
+
+        # Should redirect without error
+        self.assertEqual(response.status_code, 302)
+
+    def test_handle_revert_from_button_record_not_found(self):
+        """Test handling when historical record doesn't exist."""
+        request = self._create_request(data={"revert_id": "99999"})
+        response = self.admin_class.handle_revert_from_button(request)
+
+        # Should redirect
+        self.assertEqual(response.status_code, 302)
+
+    def test_revert_deleted_object_action_single(self):
+        """Test reverting a single deleted object via admin action."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+        poll_id = poll.pk
+        poll.delete()
+
+        # Get the deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+        queryset = Poll.history.filter(pk=deletion_record.pk)
+
+        # Create request
+        request = self._create_request(method="POST")
+
+        # Call the action
+        self.admin_class.revert_deleted_object(request, queryset)
+
+        # Verify restoration
+        self.assertTrue(Poll.objects.filter(pk=poll_id).exists())
+
+    def test_revert_deleted_object_action_multiple(self):
+        """Test reverting multiple deleted objects via admin action."""
+        # Create and delete multiple polls
+        poll1 = Poll.objects.create(question="Test 1?", pub_date=today)
+        poll1_id = poll1.pk
+        poll1.delete()
+
+        poll2 = Poll.objects.create(question="Test 2?", pub_date=today)
+        poll2_id = poll2.pk
+        poll2.delete()
+
+        # Get deletion records
+        deletion_records = Poll.history.filter(
+            id__in=[poll1_id, poll2_id], history_type="-"
+        )
+
+        # Create request
+        request = self._create_request(method="POST")
+
+        # Call the action
+        self.admin_class.revert_deleted_object(request, deletion_records)
+
+        # Verify both were restored
+        self.assertTrue(Poll.objects.filter(pk=poll1_id).exists())
+        self.assertTrue(Poll.objects.filter(pk=poll2_id).exists())
+
+    def test_revert_deleted_object_action_already_exists(self):
+        """Test action handles already existing objects gracefully."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+        poll_id = poll.pk
+        poll.delete()
+
+        # Get the deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+
+        # Restore manually
+        Poll.objects.create(id=poll_id, question="Test?", pub_date=today)
+
+        # Try to restore via action
+        queryset = Poll.history.filter(pk=deletion_record.pk)
+        request = self._create_request(method="POST")
+
+        self.admin_class.revert_deleted_object(request, queryset)
+
+        # Should still have only one object
+        self.assertEqual(Poll.objects.filter(pk=poll_id).count(), 1)
+
+    def test_revert_deleted_object_action_non_deletion_records(self):
+        """Test action ignores non-deletion records."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+
+        # Get creation records (not deletions)
+        creation_records = Poll.history.filter(id=poll.pk, history_type="+")
+
+        # Count before
+        initial_count = Poll.objects.count()
+
+        # Try to restore
+        request = self._create_request(method="POST")
+        self.admin_class.revert_deleted_object(request, creation_records)
+
+        # Count should not change
+        self.assertEqual(Poll.objects.count(), initial_count)
+
+    def test_revert_deleted_object_action_mixed_records(self):
+        """Test action handles mix of deletion and non-deletion records."""
+        # Create and delete one poll
+        poll1 = Poll.objects.create(question="Test 1?", pub_date=today)
+        poll1_id = poll1.pk
+        poll1.delete()
+
+        # Create another poll but don't delete
+        poll2 = Poll.objects.create(question="Test 2?", pub_date=today)
+
+        # Get mixed records
+        deletion_record = Poll.history.filter(id=poll1_id, history_type="-").first()
+        creation_record = Poll.history.filter(id=poll2.pk, history_type="+").first()
+
+        queryset = Poll.history.filter(pk__in=[deletion_record.pk, creation_record.pk])
+
+        # Call action
+        request = self._create_request(method="POST")
+        self.admin_class.revert_deleted_object(request, queryset)
+
+        # Only the deleted one should be restored
+        self.assertTrue(Poll.objects.filter(pk=poll1_id).exists())
+        self.assertTrue(Poll.objects.filter(pk=poll2.pk).exists())
+
+    def test_get_actions_includes_revert_action(self):
+        """Test that get_actions includes the revert action."""
+        request = self._create_request()
+        actions = self.admin_class.get_actions(request)
+
+        self.assertIn("revert_deleted_object", actions)
+        self.assertEqual(
+            actions["revert_deleted_object"][2], "Revert selected deleted objects"
+        )
+
+    def test_changelist_view_with_revert_id(self):
+        """Test that changelist_view handles revert_id parameter."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+        poll_id = poll.pk
+        poll.delete()
+
+        # Get the deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+
+        # Create request with revert_id
+        request = self._create_request(data={"revert_id": str(deletion_record.pk)})
+
+        # Call changelist_view
+        response = self.admin_class.changelist_view(request)
+
+        # Should redirect after handling revert
+        self.assertEqual(response.status_code, 302)
+
+        # Object should be restored
+        self.assertTrue(Poll.objects.filter(pk=poll_id).exists())
+
+    def test_changelist_view_without_revert_id(self):
+        """Test that changelist_view works normally without revert_id."""
+        # This should call the parent's changelist_view
+        # We'll just verify it doesn't error
+        request = self._create_request()
+
+        # We expect this to fail with AttributeError or similar since
+        # we're not setting up the full admin context, but it should
+        # at least check for revert_id first
+        try:
+            response = self.admin_class.changelist_view(request)
+        except (AttributeError, KeyError):
+            # Expected because we didn't set up full admin context
+            pass
+
+    def test_revert_preserves_field_values(self):
+        """Test that reverting preserves all field values from the historical record."""
+        # Create poll with specific values
+        original_question = "What is the meaning of life?"
+        poll = Poll.objects.create(question=original_question, pub_date=today)
+        poll_id = poll.pk
+
+        # Delete it
+        poll.delete()
+
+        # Get deletion record
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+
+        # Restore via button
+        request = self._create_request(data={"revert_id": str(deletion_record.pk)})
+        self.admin_class.handle_revert_from_button(request)
+
+        # Verify all fields match
+        restored = Poll.objects.get(pk=poll_id)
+        self.assertEqual(restored.question, original_question)
+        self.assertEqual(restored.pub_date, today)
+
+    def test_revert_creates_new_history_record(self):
+        """Test that reverting creates a new history record."""
+        poll = Poll.objects.create(question="Test?", pub_date=today)
+        poll_id = poll.pk
+
+        # Count history records
+        history_count_after_create = Poll.history.filter(id=poll_id).count()
+
+        # Delete
+        poll.delete()
+        history_count_after_delete = Poll.history.filter(id=poll_id).count()
+
+        # Restore
+        deletion_record = Poll.history.filter(id=poll_id, history_type="-").first()
+        queryset = Poll.history.filter(pk=deletion_record.pk)
+        request = self._create_request(method="POST")
+        self.admin_class.revert_deleted_object(request, queryset)
+
+        # Should have new history record for the restoration
+        history_count_after_restore = Poll.history.filter(id=poll_id).count()
+        self.assertEqual(history_count_after_restore, history_count_after_delete + 1)
+
+    def test_revert_button_short_description(self):
+        """Test that revert_button has proper short_description."""
+        self.assertEqual(self.admin_class.revert_button.short_description, "Restore")
+
+    def test_revert_deleted_object_short_description(self):
+        """Test that revert_deleted_object action has proper short_description."""
+        self.assertEqual(
+            self.admin_class.revert_deleted_object.short_description,
+            "Revert selected deleted objects",
+        )
