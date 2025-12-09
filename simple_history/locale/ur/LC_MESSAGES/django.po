@@ -1,7 +1,7 @@
 # Urdu translation for django-simple-history
 # Copyright (C) 2023
 # This file is distributed under the same license as the django-simple-history package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Muneeb Shahid <muneeb706@github.com>, 2023.
 #
 msgid ""
 msgstr ""
@@ -9,8 +9,8 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-07-02 11:10+0800\n"
 "PO-Revision-Date: 2023-07-02 11:50+0800\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"Last-Translator: Muneeb Shahid <muneeb706@github.com>\n"
+"Language-Team: Urdu <django-commons@github.com>\n"
 "Language: ur\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
