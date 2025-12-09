@@ -17,6 +17,8 @@ Unreleased
 -------------------
 
 - Tests are no longer bundled in released wheels (gh-1478)
+- ``no_db_index`` in RecordModels model now supports ```"__all__"`` in order to drop all
+  indices in the historical model (gh-1491)
 - Move repository to the Django Commons organization (gh-1391)
 
 3.9.0 (2025-01-26)

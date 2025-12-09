@@ -83,6 +83,9 @@ def _history_user_setter(historical_instance, user):
         historical_instance.history_user_id = user.pk
 
 
+ALL_FIELDS = "__all__"
+
+
 class HistoricalRecords:
     DEFAULT_MODEL_NAME_PREFIX = "Historical"
 
@@ -142,7 +145,7 @@ class HistoricalRecords:
         self.m2m_fields = m2m_fields
         self.m2m_fields_model_field_name = m2m_fields_model_field_name
 
-        if isinstance(no_db_index, str):
+        if isinstance(no_db_index, str) and no_db_index != ALL_FIELDS:
             no_db_index = [no_db_index]
         self.no_db_index = no_db_index
 
@@ -402,7 +405,7 @@ class HistoricalRecords:
                 transform_field(field)
 
             # drop db index
-            if field.name in self.no_db_index:
+            if self.no_db_index == ALL_FIELDS or field.name in self.no_db_index:
                 field.db_index = False
 
             fields[field.name] = field
