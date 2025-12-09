@@ -1,4 +1,5 @@
 import dataclasses
+import time
 import unittest
 import uuid
 import warnings
@@ -122,6 +123,7 @@ from ..models import (
     UserTextFieldChangeReasonModel,
     UUIDDefaultModel,
     UUIDModel,
+    UUIDv7Model,
     WaterLevel,
 )
 from .utils import (
@@ -636,6 +638,21 @@ class HistoricalRecordsTest(HistoricalTestCase):
 
         history = entry.history.all()[0]
         self.assertTrue(isinstance(history.history_id, uuid.UUID))
+
+    def test_uuidv7_history_id(self):
+        """
+        Tests that UUIDv7 is being used for history_id when defined in the settings,
+        and that consequent PKs are ordered based on creation time.
+        """
+        entries = []
+        for _ in range(10):
+            entries.append(UUIDv7Model.objects.create())
+            time.sleep(0.01)  # Ensure increasing time part of UUIDv7 PKs
+
+        history = [entry.history.all()[0] for entry in entries]
+        self.assertTrue(all(isinstance(h.history_id, uuid.UUID) for h in history))
+        for h1, h2 in zip(history[:-1], history[1:]):
+            self.assertLess(h1.history_id, h2.history_id)
 
     def test_default_history_change_reason(self):
         entry = CharFieldChangeReasonModel.objects.create(greeting="what's up?")

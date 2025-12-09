@@ -27,13 +27,15 @@ The example below uses a ``UUIDField`` instead of an ``AutoField``:
 
 Since using a ``UUIDField`` for the ``history_id`` is a common use case, there is a
 ``SIMPLE_HISTORY_HISTORY_ID_USE_UUID`` setting that will set all instances of ``history_id`` to UUIDs.
+By default, this will use UUIDv4, but you can choose to use UUIDv7 by setting
+``SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION`` to ``7``.
 Set this with the following line in your ``settings.py`` file:
 
 
 .. code-block:: python
 
     SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
-
+    SIMPLE_HISTORY_HISTORY_ID_UUID_VERSION = 7  # Optional
 
 
 This setting can still be overridden using the ``history_id_field`` parameter on a per model basis.
