@@ -43,11 +43,11 @@ Authors
 - David Smith
 - `ddabble <https://github.com/ddabble>`_
 - Dmytro Shyshov (`xahgmah <https://github.com/xahgmah>`_)
-- Edouard Richard (`vied12 <https://github.com/vied12>` _)
+- Edouard Richard (`vied12 <https://github.com/vied12>`_)
 - Eduardo Cuducos
 - Erik van Widenfelt (`erikvw <https://github.com/erikvw>`_)
-- Fábio Capuano (`fabiocapsouza <https://github.com/fabiocapsouza`_)
-- Filipe Pina (@fopina)
+- Fábio Capuano (`fabiocapsouza <https://github.com/fabiocapsouza>`_)
+- Filipe Pina (`@fopina <https://github.com/fopina>`_)
 - Florian Eßer
 - François Martin (`martinfrancois <https://github.com/martinfrancois>`_)
 - Frank Sachsenheim
@@ -59,7 +59,7 @@ Authors
 - Hamish Downer
 - Hans de Jong (`sult <https://github.com/sult>`_)
 - Hanyin Zhang
-- Héctor Durán (`hector97i <https://github.com/hector97i>`)
+- Héctor Durán (`hector97i <https://github.com/hector97i>`_)
 - Hernan Esteves (`sevetseh28 <https://github.com/sevetseh28>`_)
 - Hielke Walinga (`hwalinga <https://github.com/hwalinga>`_)
 - Hugo van Kemenade (`hugovk <https://github.com/hugovk>`_)
