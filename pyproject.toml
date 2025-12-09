@@ -79,12 +79,12 @@ fragments = [
 [tool.black]
 line-length = 88
 target-version = [
-  "py39",
+  "py310",
 ]
 
 [tool.isort]
 profile = "black"
-py_version = "39"
+py_version = "310"
 
 [tool.codespell]
 skip = "AUTHORS.rst,*.po"

@@ -1,6 +1,6 @@
 import dataclasses
 from os.path import commonprefix
-from typing import Any, Final, Union
+from typing import Any, Final
 
 from django.db.models import ManyToManyField, Model
 from django.utils.html import conditional_escape
