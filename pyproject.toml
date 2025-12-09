@@ -15,7 +15,7 @@ maintainers = [
 authors = [
   { name = "Corey Bertram", email = "corey@qr7.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: Web Environment",
@@ -28,7 +28,6 @@ classifiers = [
   "License :: OSI Approved :: BSD License",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -80,12 +79,12 @@ fragments = [
 [tool.black]
 line-length = 88
 target-version = [
-  "py39",
+  "py310",
 ]
 
 [tool.isort]
 profile = "black"
-py_version = "39"
+py_version = "310"
 
 [tool.codespell]
 skip = "AUTHORS.rst,*.po"
