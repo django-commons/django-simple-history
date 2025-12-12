@@ -43,11 +43,11 @@ Authors
 - David Smith
 - `ddabble <https://github.com/ddabble>`_
 - Dmytro Shyshov (`xahgmah <https://github.com/xahgmah>`_)
-- Edouard Richard (`vied12 <https://github.com/vied12>` _)
+- Edouard Richard (`vied12 <https://github.com/vied12>`_)
 - Eduardo Cuducos
 - Erik van Widenfelt (`erikvw <https://github.com/erikvw>`_)
-- Fábio Capuano (`fabiocapsouza <https://github.com/fabiocapsouza`_)
-- Filipe Pina (@fopina)
+- Fábio Capuano (`fabiocapsouza <https://github.com/fabiocapsouza>`_)
+- Filipe Pina (`@fopina <https://github.com/fopina>`_)
 - Florian Eßer
 - François Martin (`martinfrancois <https://github.com/martinfrancois>`_)
 - Frank Sachsenheim
@@ -59,7 +59,7 @@ Authors
 - Hamish Downer
 - Hans de Jong (`sult <https://github.com/sult>`_)
 - Hanyin Zhang
-- Héctor Durán (`hector97i <https://github.com/hector97i>`)
+- Héctor Durán (`hector97i <https://github.com/hector97i>`_)
 - Hernan Esteves (`sevetseh28 <https://github.com/sevetseh28>`_)
 - Hielke Walinga (`hwalinga <https://github.com/hwalinga>`_)
 - Hugo van Kemenade (`hugovk <https://github.com/hugovk>`_)
@@ -138,6 +138,7 @@ Authors
 - Tommy Beadle (`tbeadle <https://github.com/tbeadle>`_)
 - Trey Hunner (`treyhunner <https://github.com/treyhunner>`_)
 - Ulysses Vilela
+- Ülgen Sarıkavak (`ulgens <https://github.com/ulgens/>`_)
 - `vnagendra <https://github.com/vnagendra>`_
 - `yakimka <https://github.com/yakimka>`_
 - `Paulo Peres <https://github.com/PauloPeres>`_
@@ -149,6 +150,7 @@ Authors
 - `Sridhar Marella <https://github.com/sridhar562345>`_
 - `Mattia Fantoni <https://github.com/MattFanto>`_
 - `Trent Holliday <https://github.com/trumpet2012>`_
+- Denys Rozum (`denusbtw <https://github.com/denusbtw>`_)
 
 Background
 ==========

@@ -11,23 +11,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
         django-version: ['4.2', '5.0', '5.1', '5.2', '6.0', 'main']
 
         exclude:
-          # Exclude py3.9 for Django >= 5.0,
-          # and py3.10 and py3.11 for Django > 5.2
+          # Exclude py3.10 and py3.11 for Django > 5.2
           # and py3.14 for Django < 5.2
-          - python-version: '3.9'
-            django-version: '5.0'
-          - python-version: '3.9'
-            django-version: '5.1'
-          - python-version: '3.9'
-            django-version: '5.2'
-          - python-version: '3.9'
-            django-version: '6.0'
-          - python-version: '3.9'
-            django-version: 'main'
           - python-version: '3.10'
             django-version: '6.0'
           - python-version: '3.10'
@@ -133,7 +122,7 @@ jobs:
           # Install this project in editable mode, so that its package metadata can be queried
           pip install --editable .
           # Install the latest minor version of Django we support
-          pip install --pre "Django>=6.0a1"
+          pip install "Django>=6.0,<6.1"
 
       - name: Check translation files are updated
         run: python -m simple_history.tests.generated_file_checks.check_translations

@@ -21,6 +21,7 @@ from .models import (
 )
 
 
+@admin.register(Person)
 class PersonAdmin(SimpleHistoryAdmin):
     def has_change_permission(self, request, obj=None):
         return False
@@ -29,10 +30,12 @@ class PersonAdmin(SimpleHistoryAdmin):
         return False
 
 
+@admin.register(Choice)
 class ChoiceAdmin(SimpleHistoryAdmin):
     history_list_display = ["votes"]
 
 
+@admin.register(FileModel)
 class FileModelAdmin(SimpleHistoryAdmin):
     def test_method(self, obj):
         return "test_method_value"
@@ -40,6 +43,7 @@ class FileModelAdmin(SimpleHistoryAdmin):
     history_list_display = ["title", "test_method"]
 
 
+@admin.register(Planet)
 class PlanetAdmin(SimpleHistoryAdmin):
     def test_method(self, obj):
         return "test_method_value"
@@ -63,20 +67,16 @@ class HistoricalPollWithManyToManyContextHelper(HistoricalRecordContextHelper):
         return mark_safe(f"<b>{place.name}</b>")
 
 
+@admin.register(PollWithManyToMany)
 class PollWithManyToManyAdmin(SimpleHistoryAdmin):
     def get_historical_record_context_helper(self, request, historical_record):
         return HistoricalPollWithManyToManyContextHelper(self.model, historical_record)
 
 
 admin.site.register(Book, SimpleHistoryAdmin)
-admin.site.register(Choice, ChoiceAdmin)
 admin.site.register(ConcreteExternal, SimpleHistoryAdmin)
 admin.site.register(Document, SimpleHistoryAdmin)
 admin.site.register(Employee, SimpleHistoryAdmin)
 admin.site.register(ExternalModelWithCustomUserIdField, SimpleHistoryAdmin)
-admin.site.register(FileModel, FileModelAdmin)
 admin.site.register(Paper, SimpleHistoryAdmin)
-admin.site.register(Person, PersonAdmin)
-admin.site.register(Planet, PlanetAdmin)
 admin.site.register(Poll, SimpleHistoryAdmin)
-admin.site.register(PollWithManyToMany, PollWithManyToManyAdmin)
