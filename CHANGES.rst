@@ -4,8 +4,14 @@ Changes
 Unreleased
 ----------
 
-- Added support for Python 3.14
-- Added support for Django 6.0
+
+3.11.0 (2025-12-09)
+-------------------
+
+- Added support for Python 3.14 (gh-1529)
+- Added support for Django 6.0 (gh-1529)
+- Dropped support for Python 3.9, which reached end-of-life on 2025-10-31 (gh-1560)
+- Added Ukrainian localization (gh-1547)
 
 3.10.1 (2025-06-20)
 -------------------

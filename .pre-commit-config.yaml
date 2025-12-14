@@ -10,7 +10,7 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-        language_version: python3.9
+        language_version: python3.10
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -66,4 +66,9 @@ repos:
     rev: v3.20.0
     hooks:
       - id: pyupgrade
-        args: [--py39-plus]
+        args: [--py310-plus]
+
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.29.1
+    hooks:
+      - id: django-upgrade
