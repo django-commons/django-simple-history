@@ -94,3 +94,20 @@ steps:
 5. Commit and publish your translations as described above.
 
 .. _translation docs: https://docs.djangoproject.com/en/stable/topics/i18n/translation/#localization-how-to-create-language-files
+
+Releases
+--------
+
+The release process follow's `Django Commons Best Practices`_. The steps are as
+follows:
+
+1. Prepare a PR that updates the version
+2. Merge version update PR
+3. Create tag locally
+4. Push tag to GitHub
+5. A member of ``@django-commons/django-simple-history-admins`` team will need to
+   approve deployment GitHub Action
+6. [Automated] The release GitHub Action will create the GitHub release for the
+   new tag which can then be edited
+
+.. _Django Commons Best Practices: https://github.com/django-commons/best-practices/blob/main/docs/releases.md#releases
