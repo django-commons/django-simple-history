@@ -479,6 +479,44 @@ class ConcreteUtil(AbstractBase):
 register(ConcreteUtil, bases=[AbstractBase])
 
 
+# Test SIMPLE_HISTORY_CUSTOM_BASES setting
+setattr(settings, "SIMPLE_HISTORY_CUSTOM_BASES", [IPAddressHistoricalModel])
+
+
+class PollWithDefaultCustomBases(models.Model):
+    question = models.CharField(max_length=200)
+    history = HistoricalRecords()
+
+
+class PollWithExplicitBasesOverride(models.Model):
+    question = models.CharField(max_length=200)
+    history = HistoricalRecords(bases=[SessionsHistoricalModel])
+
+
+delattr(settings, "SIMPLE_HISTORY_CUSTOM_BASES")
+
+
+# Test SIMPLE_HISTORY_CUSTOM_M2M_BASES setting
+setattr(settings, "SIMPLE_HISTORY_CUSTOM_M2M_BASES", [IPAddressHistoricalModel])
+
+
+class PollWithDefaultCustomM2MBases(models.Model):
+    question = models.CharField(max_length=200)
+    places = models.ManyToManyField("Place")
+    history = HistoricalRecords(m2m_fields=[places])
+
+
+class PollWithExplicitM2MBasesOverride(models.Model):
+    question = models.CharField(max_length=200)
+    places = models.ManyToManyField("Place")
+    history = HistoricalRecords(
+        m2m_fields=[places], m2m_bases=[SessionsHistoricalModel]
+    )
+
+
+delattr(settings, "SIMPLE_HISTORY_CUSTOM_M2M_BASES")
+
+
 class MultiOneToOne(models.Model):
     fk = models.ForeignKey(SecondLevelInheritedModel, on_delete=models.CASCADE)
 

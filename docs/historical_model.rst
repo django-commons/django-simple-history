@@ -295,6 +295,24 @@ To change the auto-generated HistoricalRecord models base class from
         history = HistoricalRecords(bases=[RoutableModel])
 
 
+You can also set a system-wide default for all HistoricalRecord base classes using
+the ``SIMPLE_HISTORY_CUSTOM_BASES`` setting in your ``settings.py`` file:
+
+.. code-block:: python
+
+    SIMPLE_HISTORY_CUSTOM_BASES = [RoutableModel, AuditModel]
+
+This setting will be used for all ``HistoricalRecords`` instances that don't explicitly
+specify a ``bases`` parameter. The explicit ``bases`` parameter always takes precedence
+over this setting, allowing you to override the global default on a per-model basis.
+
+For many-to-many historical models, you can use:
+
+.. code-block:: python
+
+    SIMPLE_HISTORY_CUSTOM_M2M_BASES = [M2MRoutableModel]
+
+
 Excluded Fields
 --------------------------------
 
