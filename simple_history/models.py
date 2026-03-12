@@ -825,7 +825,21 @@ class HistoricalRecords:
         field_names = [
             field if isinstance(field, str) else field.name for field in m2m_fields
         ]
-        return [getattr(model, field_name).field for field_name in field_names]
+        resolved: list[models.Field] = []
+
+        for field_name in field_names:
+            # Try the upstream behavior first (works for real ManyToManyFields)
+            descriptor: Any = getattr(model, field_name, None)
+            field: Any = getattr(descriptor, "field", None)
+
+            if field is None:
+                # When descriptor has no field, for custom managers like
+                # TagableManager, try to resolve the field from the model _meta
+                field = model._meta.get_field(field_name)
+
+            resolved.append(field)
+
+        return resolved
 
 
 def transform_field(field):
