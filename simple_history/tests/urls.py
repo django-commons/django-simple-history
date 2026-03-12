@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path
 
 from simple_history.tests.view import (
     BucketDataRegisterRequestUserCreate,
@@ -29,8 +29,8 @@ urlpatterns = [
         BucketDataRegisterRequestUserCreate.as_view(),
         name="bucket_data-add",
     ),
-    re_path(
-        r"^bucket_data/(?P<pk>[0-9]+)/$",
+    path(
+        "bucket_data/<int:pk>/",
         BucketDataRegisterRequestUserDetail.as_view(),
         name="bucket_data-detail",
     ),
@@ -40,9 +40,9 @@ urlpatterns = [
         PollWithHistoricalIPAddressCreate.as_view(),
         name="pollip-add",
     ),
-    re_path(r"^poll/(?P<pk>[0-9]+)/$", PollUpdate.as_view(), name="poll-update"),
-    re_path(r"^poll/(?P<pk>[0-9]+)/delete/$", PollDelete.as_view(), name="poll-delete"),
-    re_path(r"^polls/(?P<pk>[0-9]+)/$", PollDetail.as_view(), name="poll-detail"),
+    path("poll/<int:pk>/", PollUpdate.as_view(), name="poll-update"),
+    path("poll/<int:pk>/delete/", PollDelete.as_view(), name="poll-delete"),
+    path("polls/<int:pk>/", PollDetail.as_view(), name="poll-detail"),
     path("polls/", PollList.as_view(), name="poll-list"),
     path("polls-bulk-create/", PollBulkCreateView.as_view(), name="poll-bulk-create"),
     path(

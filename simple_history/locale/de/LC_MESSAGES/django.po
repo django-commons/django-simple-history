@@ -1,22 +1,22 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# German translation for django-simple-history
+# Copyright (C) 2018
+# This file is distributed under the same license as the django-simple-history package.
+# Frank Sachsenheim <funkyfuture@github.com>, 2018.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: django-simple-history\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-11-21 15:58+0100\n"
 "PO-Revision-Date: 2018-11-21 16:31+0100\n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: \n"
+"Last-Translator: Conrad <creyD@github.com>\n"
+"Language-Team: German <django-commons@github.com>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
 #: simple_history/admin.py:78
 #, python-format
 msgid "Change history: %s"

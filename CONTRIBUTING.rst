@@ -1,11 +1,7 @@
 Contributing to django-simple-history
 =====================================
 
-.. image:: https://jazzband.co/static/img/jazzband.svg
-   :target: https://jazzband.co/
-   :alt: Jazzband
-
-This is a `Jazzband <https://jazzband.co>`_ project. By contributing you agree to abide by the `Contributor Code of Conduct <https://jazzband.co/about/conduct>`_ and follow the `guidelines <https://jazzband.co/about/guidelines>`_.
+By contributing you agree to abide by the `Contributor Code of Conduct <https://github.com/django-commons/django-simple-history/blob/master/CODE_OF_CONDUCT.md>`_.
 
 Pull Requests
 -------------
@@ -98,3 +94,20 @@ steps:
 5. Commit and publish your translations as described above.
 
 .. _translation docs: https://docs.djangoproject.com/en/stable/topics/i18n/translation/#localization-how-to-create-language-files
+
+Releases
+--------
+
+The release process follow's `Django Commons Best Practices`_. The steps are as
+follows:
+
+1. Prepare a PR that updates the version
+2. Merge version update PR
+3. Create tag locally
+4. Push tag to GitHub
+5. A member of ``@django-commons/django-simple-history-admins`` team will need to
+   approve deployment GitHub Action
+6. [Automated] The release GitHub Action will create the GitHub release for the
+   new tag which can then be edited
+
+.. _Django Commons Best Practices: https://github.com/django-commons/best-practices/blob/main/docs/releases.md#releases

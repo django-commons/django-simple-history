@@ -5,6 +5,25 @@ Unreleased
 ----------
 
 
+3.11.0 (2025-12-09)
+-------------------
+
+- Added support for Python 3.14 (gh-1529)
+- Added support for Django 6.0 (gh-1529)
+- Dropped support for Python 3.9, which reached end-of-life on 2025-10-31 (gh-1560)
+- Added Ukrainian localization (gh-1547)
+
+3.10.1 (2025-06-20)
+-------------------
+
+- Fixed changelog syntax to support PyPI packaging (gh-1499)
+
+3.10.0 (2025-06-20)
+-------------------
+
+- Tests are no longer bundled in released wheels (gh-1478)
+- Move repository to the Django Commons organization (gh-1391)
+
 3.9.0 (2025-01-26)
 ------------------
 
