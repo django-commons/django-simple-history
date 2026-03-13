@@ -122,6 +122,7 @@ Authors
 - Renaud Perrin (`leminaw <https://github.com/leminaw>`_)
 - Roberto Aguilar
 - Rod Xavier Bondoc
+- Rodrigo Nogueira (`rodrigobnogueira <https://github.com/rodrigobnogueira>`_)
 - Ross Lote
 - Ross Mechanic (`rossmechanic <https://github.com/rossmechanic>`_)
 - Ross Rogers
