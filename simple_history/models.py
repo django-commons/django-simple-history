@@ -1065,6 +1065,26 @@ class HistoricalChanges(ModelTypeHint):
         included_m2m_fields = {field.name for field in old_history._history_m2m_fields}
         if included_fields is None:
             included_fields = {f.name for f in old_history.tracked_fields if f.editable}
+            # Also include any extra fields added by custom base classes
+            # (passed via the `bases` parameter of `HistoricalRecords`).
+            # These fields exist on the historical model but not in
+            # `tracked_fields`, which only contains the original model's fields.
+            history_internal_fields = {
+                "history_id",
+                "history_date",
+                "history_change_reason",
+                "history_type",
+                "history_user",
+                "history_relation",
+            }
+            tracked_field_names = {f.name for f in old_history.tracked_fields}
+            for f in old_history._meta.fields:
+                if (
+                    f.editable
+                    and f.name not in history_internal_fields
+                    and f.name not in tracked_field_names
+                ):
+                    included_fields.add(f.name)
         else:
             included_m2m_fields = included_m2m_fields.intersection(included_fields)
 
