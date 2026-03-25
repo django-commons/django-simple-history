@@ -2,6 +2,8 @@ from importlib import metadata
 
 __version__ = metadata.version("django-simple-history")
 
+default_app_config = "simple_history.apps.SimpleHistoryAppConfig"
+
 
 def register(
     model,
@@ -36,4 +38,4 @@ def register(
     records.module = app and ("%s.models" % app) or model.__module__
     records.cls = model
     records.add_extra_methods(model)
-    records.finalize(model)
+    records._do_finalize(model, inherited=False)
