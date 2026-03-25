@@ -3011,3 +3011,71 @@ class HistoricOneToOneFieldTest(TestCase):
         )
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "original")
+
+
+class DynamicFieldTrackingTest(TestCase):
+    """Tests for models with dynamically added fields via custom metaclass.
+
+    This simulates the django-organizations OrgMeta pattern where fields are
+    added via add_to_class() after class_prepared fires (issue #1517).
+    """
+
+    def test_historical_model_has_dynamic_field(self):
+        """The dynamically added 'group' ForeignKey should be on the historical model."""
+        from ..models import DynamicMember
+
+        history_model = DynamicMember.history.model
+        field_names = [f.name for f in history_model._meta.fields]
+        self.assertIn(
+            "group",
+            field_names,
+            "Dynamic 'group' ForeignKey is missing from the historical model. "
+            "This means the re-finalization in AppConfig.ready() did not detect "
+            "the dynamically added field.",
+        )
+
+    def test_historical_model_for_group_exists(self):
+        """DynamicGroup's historical model should track the 'name' field."""
+        from ..models import DynamicGroup
+
+        history_model = DynamicGroup.history.model
+        field_names = [f.name for f in history_model._meta.fields]
+        self.assertIn("name", field_names)
+
+    def test_no_duplicate_history_on_save(self):
+        """Saving should create exactly 1 history record, not 2 (no duplicate signals)."""
+        from ..models import DynamicGroup, DynamicMember
+
+        group = DynamicGroup.objects.create(name="Test Group")
+        member = DynamicMember.objects.create(role="admin", group=group)
+
+        self.assertEqual(group.history.count(), 1)
+        self.assertEqual(member.history.count(), 1)
+
+    def test_dynamic_field_value_tracked_in_history(self):
+        """The value of the dynamic 'group' FK should be tracked in history."""
+        from ..models import DynamicGroup, DynamicMember
+
+        group1 = DynamicGroup.objects.create(name="Group A")
+        group2 = DynamicGroup.objects.create(name="Group B")
+        member = DynamicMember.objects.create(role="member", group=group1)
+
+        # Change group
+        member.group = group2
+        member.save()
+
+        self.assertEqual(member.history.count(), 2)
+        latest_history = member.history.first()
+        oldest_history = member.history.last()
+        self.assertEqual(latest_history.group_id, group2.pk)
+        self.assertEqual(oldest_history.group_id, group1.pk)
+
+    def test_no_duplicate_history_on_update(self):
+        """Updating a model should create exactly 1 additional history record."""
+        from ..models import DynamicGroup
+
+        group = DynamicGroup.objects.create(name="Original")
+        group.name = "Updated"
+        group.save()
+
+        self.assertEqual(group.history.count(), 2)
