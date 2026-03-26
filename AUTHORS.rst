@@ -150,6 +150,7 @@ Authors
 - `Mattia Fantoni <https://github.com/MattFanto>`_
 - `Trent Holliday <https://github.com/trumpet2012>`_
 - Denys Rozum (`denusbtw <https://github.com/denusbtw>`_)
+- Owhofasa Emrobowasan (`ace2016 <https://github.com/ace2016>`_)
 
 Background
 ==========
