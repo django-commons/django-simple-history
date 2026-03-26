@@ -92,6 +92,19 @@ class AdminSiteTest(TestCase):
         self.assertContains(response, "A random test reason")
         self.assertContains(response, self.user.username)
 
+    @override_settings(USE_TZ=True, TIME_ZONE="UTC")
+    def test_history_list_displays_timezone(self):
+        self.login()
+        poll = Poll(question="why?", pub_date=today)
+        poll._change_reason = "Test timezone"
+        poll._history_user = self.user
+        poll.save()
+
+        response = self.client.get(get_history_url(poll))
+        self.assertContains(response, get_history_url(poll, 0))
+        # Ensure UTC timezone shows alongside date
+        self.assertContains(response, "UTC")
+
     def test_history_list_contains_diff_changes(self):
         self.login()
         poll = Poll(question="why?", pub_date=today)
