@@ -10,12 +10,12 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-        language_version: python3.10
+        language_version: python3
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
-      - id: codespell # See pyproject.toml for args
+      - id: codespell  # See pyproject.toml for args
         additional_dependencies:
           - tomli
 

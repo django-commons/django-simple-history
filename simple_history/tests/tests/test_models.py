@@ -3021,7 +3021,7 @@ class DynamicFieldTrackingTest(TestCase):
     """
 
     def test_historical_model_has_dynamic_field(self):
-        """The dynamically added 'group' ForeignKey should be on the historical model."""
+        """Dynamic 'group' ForeignKey should be on the historical model."""
         from ..models import DynamicMember
 
         history_model = DynamicMember.history.model
@@ -3043,7 +3043,7 @@ class DynamicFieldTrackingTest(TestCase):
         self.assertIn("name", field_names)
 
     def test_no_duplicate_history_on_save(self):
-        """Saving should create exactly 1 history record, not 2 (no duplicate signals)."""
+        """Saving should create exactly 1 history record (no duplicate signals)."""
         from ..models import DynamicGroup, DynamicMember
 
         group = DynamicGroup.objects.create(name="Test Group")

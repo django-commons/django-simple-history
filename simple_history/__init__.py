@@ -2,8 +2,6 @@ from importlib import metadata
 
 __version__ = metadata.version("django-simple-history")
 
-default_app_config = "simple_history.apps.SimpleHistoryAppConfig"
-
 
 def register(
     model,
