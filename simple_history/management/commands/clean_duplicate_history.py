@@ -8,7 +8,7 @@ from . import populate_history
 class Command(populate_history.Command):
     args = "<app.model app.model ...>"
     help = (
-        "Scans HistoricalRecords for identical sequencial entries "
+        "Scans HistoricalRecords for identical sequential entries "
         "(duplicates) in a model and deletes them."
     )
 

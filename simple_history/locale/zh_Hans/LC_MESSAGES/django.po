@@ -1,14 +1,14 @@
 # Simplified Chinese translation for django-simple-history
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# Copyright (C) 2023
 # This file is distributed under the same license as the django-simple-history package.
 # Peihao Ren <peihao.ren@outlook.com>, 2023.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: django-simple-history VERSION\n"
+"Project-Id-Version: django-simple-history\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-11-30 22:12+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2023-11-30 22:12+0800\n"
 "Last-Translator: Peihao Ren <peihao.ren@outlook.com>\n"
 "Language-Team: Simplified Chinese <placeholder@example.org>\n"
 "Language: zh_Hans\n"
