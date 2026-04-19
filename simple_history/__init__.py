@@ -36,4 +36,4 @@ def register(
     records.module = app and ("%s.models" % app) or model.__module__
     records.cls = model
     records.add_extra_methods(model)
-    records.finalize(model)
+    records._do_finalize(model, inherited=False)

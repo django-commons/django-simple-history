@@ -2,6 +2,7 @@
 {% load url from simple_history_compat %}
 {% load admin_urls %}
 {% load getattribute from getattributes %}
+{% load simple_history_admin_list %}
 
 <table id="change-history" class="table table-bordered table-striped">
   <thead>
@@ -28,7 +29,7 @@
         {% for column in history_list_display %}
           <td>{{ record|getattribute:column }}</td>
         {% endfor %}
-        <td>{{ record.history_date }}</td>
+        <td>{{ record.history_date|display_list_history_date }}</td>
         <td>{{ record.get_history_type_display }}</td>
         <td>
           {% if record.history_user %}
