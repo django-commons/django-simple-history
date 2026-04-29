@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, models
+from django.db.models import Prefetch
 from django.db.models.fields.proxy import OrderWrt
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -113,6 +114,7 @@ from ..models import (
     TestHistoricParticipanToHistoricOrganizationOneToOne,
     TestHistoricParticipantToOrganization,
     TestHistoricParticipantToOrganizationOneToOne,
+    TestHistoricSubParticipantToHistoricParticipant,
     TestOrganization,
     TestOrganizationWithHistory,
     TestParticipantToHistoricOrganization,
@@ -2949,6 +2951,84 @@ class HistoricForeignKeyTest(TestCase):
                 [p.name for p in record2.historic_participants.all()],
                 [p3.name, p4.name],
             )
+
+    def test_nested_prefetch_across_historic_foreign_keys(self):
+        """Nested ``prefetch_related`` across two HistoricForeignKey reverse
+        relations should populate the cache for every parent at each level.
+
+        Regression test for the ``SubSub`` case in #1152: the bare
+        ``prefetch_related("a__b")`` form would silently return an empty
+        related set for parents other than the first.
+        """
+        org1 = TestOrganizationWithHistory.objects.create(name="org1")
+        org2 = TestOrganizationWithHistory.objects.create(name="org2")
+
+        p1 = TestHistoricParticipanToHistoricOrganization.objects.create(
+            name="p1", organization=org1
+        )
+        p2 = TestHistoricParticipanToHistoricOrganization.objects.create(
+            name="p2", organization=org1
+        )
+        p3 = TestHistoricParticipanToHistoricOrganization.objects.create(
+            name="p3", organization=org2
+        )
+        p4 = TestHistoricParticipanToHistoricOrganization.objects.create(
+            name="p4", organization=org2
+        )
+
+        sub_names = {
+            p.id: [f"{p.name}-sub1", f"{p.name}-sub2"] for p in (p1, p2, p3, p4)
+        }
+        for participant in (p1, p2, p3, p4):
+            for sub_name in sub_names[participant.id]:
+                TestHistoricSubParticipantToHistoricParticipant.objects.create(
+                    name=sub_name, participant=participant
+                )
+
+        # Bare nested prefetch (the form that previously regressed).
+        with self.assertNumQueries(3):
+            record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
+                "historic_participants__historic_sub_participants"
+            ).all()
+
+            for org, expected_participants in (
+                (record1, (p1, p2)),
+                (record2, (p3, p4)),
+            ):
+                participants = list(org.historic_participants.all())
+                self.assertEqual(len(participants), 2)
+                for participant, expected in zip(participants, expected_participants):
+                    self.assertEqual(participant.name, expected.name)
+                    self.assertListEqual(
+                        [s.name for s in participant.historic_sub_participants.all()],
+                        sub_names[expected.id],
+                    )
+
+        # Equivalent fully-explicit form using ``Prefetch`` objects, which
+        # already worked before the fix.
+        sub_qs = TestHistoricSubParticipantToHistoricParticipant.objects.all()
+        participant_qs = (
+            TestHistoricParticipanToHistoricOrganization.objects.prefetch_related(
+                Prefetch("historic_sub_participants", queryset=sub_qs)
+            )
+        )
+        with self.assertNumQueries(3):
+            record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
+                Prefetch("historic_participants", queryset=participant_qs)
+            ).all()
+
+            for org, expected_participants in (
+                (record1, (p1, p2)),
+                (record2, (p3, p4)),
+            ):
+                participants = list(org.historic_participants.all())
+                self.assertEqual(len(participants), 2)
+                for participant, expected in zip(participants, expected_participants):
+                    self.assertEqual(participant.name, expected.name)
+                    self.assertListEqual(
+                        [s.name for s in participant.historic_sub_participants.all()],
+                        sub_names[expected.id],
+                    )
 
 
 class HistoricOneToOneFieldTest(TestCase):

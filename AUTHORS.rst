@@ -97,6 +97,7 @@ Authors
 - Maciej "RooTer" Urbański
 - Marcelo Canina (`marcanuy <https://github.com/marcanuy>`_)
 - Marco Sirabella
+- Marek Podešva (`mr-mare <https://github.com/mr-mare>`_)
 - Mark Davidoff
 - Martin Bachwerk
 - Marty Alchin
@@ -134,6 +135,7 @@ Authors
 - Thijs Kramer (`thijskramer <https://github.com/thijskramer>`_)
 - Tim Schilling (`tim-schilling <https://github.com/tim-schilling>`_)
 - Todd Wolfson (`twolfson <https://github.com/twolfson>`_)
+- Tom Hampshire (`tomhampshire <https://github.com/tomhampshire>`_)
 - Tommy Beadle (`tbeadle <https://github.com/tbeadle>`_)
 - Trey Hunner (`treyhunner <https://github.com/treyhunner>`_)
 - Ulysses Vilela
