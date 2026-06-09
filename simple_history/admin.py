@@ -73,7 +73,7 @@ class SimpleHistoryAdmin(admin.ModelAdmin):
                 raise http.Http404
 
         if not self.has_view_history_or_change_history_permission(request, obj):
-            raise PermissionDenied
+            raise PermissionDenied("PermissionDenied")
 
         # Use the same pagination as in Django admin, with history_list_per_page items
         paginator = Paginator(historical_records, self.history_list_per_page)
