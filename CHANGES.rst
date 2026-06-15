@@ -4,6 +4,8 @@ Changes
 Unreleased
 ----------
 
+- Added support for Django 6.1 (gh-1611)
+
 
 3.11.0 (2025-12-09)
 -------------------
