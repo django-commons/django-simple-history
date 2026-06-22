@@ -90,9 +90,13 @@ from ..models import (
     PollChildRestaurantWithManyToMany,
     PollInfo,
     PollWithAlternativeManager,
+    PollWithDefaultCustomBases,
+    PollWithDefaultCustomM2MBases,
     PollWithExcludedFieldsWithDefaults,
     PollWithExcludedFKField,
     PollWithExcludeFields,
+    PollWithExplicitBasesOverride,
+    PollWithExplicitM2MBasesOverride,
     PollWithHistoricalIPAddress,
     PollWithManyToMany,
     PollWithManyToManyCustomHistoryID,
@@ -1475,6 +1479,67 @@ class HistoryManagerTest(TestCase):
         invalid_bases = (AbstractBase, "InvalidBases")
         for bases in invalid_bases:
             self.assertRaises(TypeError, HistoricalRecords, bases=bases)
+
+    def test_custom_bases_from_settings(self):
+        """Test that SIMPLE_HISTORY_CUSTOM_BASES setting is correctly applied."""
+        # PollWithDefaultCustomBases uses SIMPLE_HISTORY_CUSTOM_BASES
+        history_model = PollWithDefaultCustomBases.history.model
+        # Check that IPAddressHistoricalModel is in the MRO
+        self.assertIn(
+            "IPAddressHistoricalModel",
+            [cls.__name__ for cls in history_model.__mro__],
+        )
+        # Verify the historical model has ip_address field from IPAddressHistoricalModel
+        self.assertTrue(hasattr(history_model, "ip_address"))
+
+    def test_custom_bases_explicit_overrides_setting(self):
+        """Test that explicit bases parameter overrides setting."""
+        # PollWithExplicitBasesOverride uses explicit bases parameter
+        # even though SIMPLE_HISTORY_CUSTOM_BASES was set to [IPAddressHistoricalModel]
+        history_model = PollWithExplicitBasesOverride.history.model
+        # Should have SessionsHistoricalModel, not IPAddressHistoricalModel
+        self.assertIn(
+            "SessionsHistoricalModel",
+            [cls.__name__ for cls in history_model.__mro__],
+        )
+        self.assertTrue(hasattr(history_model, "session"))
+        # Should NOT have ip_address from IPAddressHistoricalModel
+        self.assertFalse(hasattr(history_model, "ip_address"))
+
+    def test_custom_m2m_bases_from_settings(self):
+        """Test that SIMPLE_HISTORY_CUSTOM_M2M_BASES setting is applied."""
+        # PollWithDefaultCustomM2MBases uses SIMPLE_HISTORY_CUSTOM_M2M_BASES
+        # Get the M2M historical model by its generated name
+        from django.apps import apps
+
+        m2m_history_model = apps.get_model(
+            "tests", "HistoricalPollWithDefaultCustomM2MBases_places"
+        )
+        # Check that IPAddressHistoricalModel is in the MRO
+        self.assertIn(
+            "IPAddressHistoricalModel",
+            [cls.__name__ for cls in m2m_history_model.__mro__],
+        )
+        # Verify the M2M historical model has ip_address field
+        self.assertTrue(hasattr(m2m_history_model, "ip_address"))
+
+    def test_custom_m2m_bases_explicit_overrides_setting(self):
+        """Test that explicit m2m_bases parameter overrides setting."""
+        # PollWithExplicitM2MBasesOverride uses explicit m2m_bases
+        # even though SIMPLE_HISTORY_CUSTOM_M2M_BASES was set
+        from django.apps import apps
+
+        m2m_history_model = apps.get_model(
+            "tests", "HistoricalPollWithExplicitM2MBasesOverride_places"
+        )
+        # Should have SessionsHistoricalModel, not IPAddressHistoricalModel
+        self.assertIn(
+            "SessionsHistoricalModel",
+            [cls.__name__ for cls in m2m_history_model.__mro__],
+        )
+        self.assertTrue(hasattr(m2m_history_model, "session"))
+        # Should NOT have ip_address from IPAddressHistoricalModel
+        self.assertFalse(hasattr(m2m_history_model, "ip_address"))
 
     def test_import_related(self):
         field_object = HistoricalChoice._meta.get_field("poll")
