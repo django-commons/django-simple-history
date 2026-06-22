@@ -629,6 +629,22 @@ class CustomHistoricalAttrsTest(TestCase):
             5,
         )
 
+    def test_bulk_history_create_with_default_date(self):
+        date = datetime(2020, 7, 1)
+        history_manager = get_history_manager_for_model(PollWithHistoricalSessionAttr)
+        history_manager.bulk_history_create(self.data, default_date=date)
+
+        self.assertEqual(PollWithHistoricalSessionAttr.objects.count(), 0)
+        self.assertEqual(PollWithHistoricalSessionAttr.history.count(), 5)
+        self.assertTrue(
+            all(
+                [
+                    history.history_date == date
+                    for history in PollWithHistoricalSessionAttr.history.all()
+                ]
+            )
+        )
+
 
 class UpdateChangeReasonTestCase(TestCase):
     def test_update_change_reason_with_excluded_fields(self):

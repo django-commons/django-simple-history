@@ -131,6 +131,7 @@ Authors
 - Stefan Borer (`sbor23 <https://github.com/sbor23>`_)
 - Steven Buss (`sbuss <https://github.com/sbuss>`_)
 - Steven Klass
+- The Alchemist (`The-Alchemist <https://github.com/The-Alchemist>`_)
 - Thijs Kramer (`thijskramer <https://github.com/thijskramer>`_)
 - Tim Schilling (`tim-schilling <https://github.com/tim-schilling>`_)
 - Todd Wolfson (`twolfson <https://github.com/twolfson>`_)
