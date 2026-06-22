@@ -4,6 +4,7 @@ Changes
 Unreleased
 ----------
 
+- Added timezone information to `history_date` column in the Django Admin list view when `USE_TZ = True` (gh-1583)
 
 3.12.0 (2026-06-22)
 -------------------

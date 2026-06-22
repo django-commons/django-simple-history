@@ -1042,3 +1042,94 @@ class TestHistoricParticipanToHistoricOrganizationOneToOne(models.Model):
         related_name="historic_participant",
     )
     history = HistoricalRecords()
+
+
+###############################################################################
+#
+# Dynamic field models - Simulates the django-organizations OrgMeta pattern
+# where a metaclass dynamically adds ForeignKey fields via add_to_class()
+# after all model classes in a group are defined.
+#
+###############################################################################
+
+
+class DynamicFieldsMeta(models.base.ModelBase):
+    """
+    Custom metaclass that simulates django-organizations' OrgMeta pattern.
+
+    It registers models in a module_registry and only adds dynamic ForeignKey
+    fields once all required models (GroupModel and MemberModel) are registered.
+    This means the fields are added AFTER class_prepared fires for each model.
+    """
+
+    module_registry = {}
+
+    def __new__(cls, name, bases, attrs):  # noqa
+        model = super().__new__(cls, name, bases, attrs)
+
+        base_classes = ["GroupModel", "MemberModel"]
+
+        module = model.__module__
+        if module not in cls.module_registry:
+            cls.module_registry[module] = {
+                "GroupModel": None,
+                "MemberModel": None,
+            }
+
+        for b in bases:
+            if b.__name__ == "AbstractDynamicGroup":
+                cls.module_registry[module]["GroupModel"] = model
+            elif b.__name__ == "AbstractDynamicMember":
+                cls.module_registry[module]["MemberModel"] = model
+
+        if all(cls.module_registry[module][klass] for klass in base_classes):
+            # All models are defined - now add the dynamic fields
+            group_model = cls.module_registry[module]["GroupModel"]
+            member_model = cls.module_registry[module]["MemberModel"]
+
+            # Add a ForeignKey from MemberModel -> GroupModel
+            from django.core.exceptions import FieldDoesNotExist
+
+            try:
+                member_model._meta.get_field("group")
+            except FieldDoesNotExist:
+                member_model.add_to_class(
+                    "group",
+                    models.ForeignKey(
+                        group_model,
+                        related_name="members",
+                        on_delete=models.CASCADE,
+                    ),
+                )
+
+        return model
+
+
+class AbstractDynamicGroup(models.Model):
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        abstract = True
+
+
+class AbstractDynamicMember(models.Model):
+    role = models.CharField(max_length=50, default="member")
+
+    class Meta:
+        abstract = True
+
+
+# Use the helper function to create a temporary metaclass combining
+# DynamicFieldsMeta with Model
+class DynamicGroup(AbstractDynamicGroup, metaclass=DynamicFieldsMeta):
+    history = HistoricalRecords()
+
+    class Meta(AbstractDynamicGroup.Meta):
+        pass
+
+
+class DynamicMember(AbstractDynamicMember, metaclass=DynamicFieldsMeta):
+    history = HistoricalRecords()
+
+    class Meta(AbstractDynamicMember.Meta):
+        pass
