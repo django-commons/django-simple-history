@@ -60,6 +60,40 @@ else:
 
 registered_models = {}
 
+# List of (HistoricalRecords instance, sender model, inherited bool, field_count)
+# tuples tracking models that were finalized during class_prepared. In ready(),
+# these are re-checked for dynamically added fields (e.g. from metaclasses like
+# django-organizations' OrgMeta) that were added after class_prepared fired.
+_finalized_models = []
+
+
+def _process_pending_finalizations():
+    """Re-check all finalized models for dynamically added fields.
+
+    Called from SimpleHistoryAppConfig.ready() to detect fields that were added
+    to models after their class_prepared signal fired (e.g. by custom metaclasses
+    like django-organizations' OrgMeta). If a model has gained new fields since
+    its historical model was created, the historical model is re-created to
+    include those fields.
+    """
+    while _finalized_models:
+        recorder, sender, inherited, original_field_count = _finalized_models.pop(0)
+        current_field_count = len(recorder.fields_included(sender))
+        if current_field_count != original_field_count:
+            # Model has gained (or lost) fields since finalization.
+            # Re-create the historical model with the updated fields.
+
+            # Disconnect old signals to prevent duplicate history records.
+            models.signals.post_save.disconnect(recorder.post_save, sender=sender)
+            models.signals.post_delete.disconnect(recorder.post_delete, sender=sender)
+            models.signals.pre_delete.disconnect(recorder.pre_delete, sender=sender)
+
+            # Remove the old registration so _do_finalize doesn't
+            # raise MultipleRegistrationsError.
+            if hasattr(sender._meta, "simple_history_manager_attribute"):
+                del sender._meta.simple_history_manager_attribute
+            recorder._do_finalize(sender, inherited)
+
 
 def _default_get_user(request, **kwargs):
     try:
@@ -203,6 +237,17 @@ class HistoricalRecords:
             if not inherited:
                 return  # set in abstract
 
+        self._do_finalize(sender, inherited)
+
+        if not apps.ready:
+            # Record this finalization so that in AppConfig.ready() we can
+            # re-check if the model gained any dynamically added fields
+            # (e.g. from custom metaclasses like django-organizations' OrgMeta)
+            # that were added after class_prepared fired.
+            field_count = len(self.fields_included(sender))
+            _finalized_models.append((self, sender, inherited, field_count))
+
+    def _do_finalize(self, sender, inherited):
         if hasattr(sender._meta, "simple_history_manager_attribute"):
             raise exceptions.MultipleRegistrationsError(
                 "{}.{} registered multiple times for history tracking.".format(
@@ -1065,6 +1110,26 @@ class HistoricalChanges(ModelTypeHint):
         included_m2m_fields = {field.name for field in old_history._history_m2m_fields}
         if included_fields is None:
             included_fields = {f.name for f in old_history.tracked_fields if f.editable}
+            # Also include any extra fields added by custom base classes
+            # (passed via the `bases` parameter of `HistoricalRecords`).
+            # These fields exist on the historical model but not in
+            # `tracked_fields`, which only contains the original model's fields.
+            history_internal_fields = {
+                "history_id",
+                "history_date",
+                "history_change_reason",
+                "history_type",
+                "history_user",
+                "history_relation",
+            }
+            tracked_field_names = {f.name for f in old_history.tracked_fields}
+            for f in old_history._meta.fields:
+                if (
+                    f.editable
+                    and f.name not in history_internal_fields
+                    and f.name not in tracked_field_names
+                ):
+                    included_fields.add(f.name)
         else:
             included_m2m_fields = included_m2m_fields.intersection(included_fields)
 
