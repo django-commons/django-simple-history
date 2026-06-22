@@ -925,6 +925,15 @@ class ModelWithMultipleNoDBIndex(models.Model):
     history = HistoricalRecords(no_db_index=["name", "fk", "other"])
 
 
+class ModelWithAllNoDBIndex(models.Model):
+    name = models.CharField(max_length=15, db_index=True)
+    name_no_index = models.CharField(max_length=15)
+    fk = models.ForeignKey(
+        "Library", on_delete=models.CASCADE, null=True, related_name="+"
+    )
+    history = HistoricalRecords(no_db_index="__all__")
+
+
 class TestOrganization(models.Model):
     name = models.CharField(max_length=15, unique=True)
 

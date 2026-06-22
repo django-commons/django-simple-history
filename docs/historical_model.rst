@@ -519,6 +519,28 @@ And you don't want to create database index for ``question``, it is necessary to
         history = HistoricalRecords(no_db_index=['question'])
 
 
+A single field can also be passed as a string instead of a list:
+
+.. code-block:: python
+
+    class PollWithExcludeFields(models.Model):
+        question = models.CharField(max_length=200, db_index=True)
+
+        history = HistoricalRecords(no_db_index='question')
+
+
+It is also possible to exclude all fields from having database indices in the historical table
+by using __all__:
+
+.. code-block:: python
+
+    class PollWithExcludeFields(models.Model):
+        question = models.CharField(max_length=200, db_index=True)
+        published_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+        history = HistoricalRecords(no_db_index='__all__')
+
+
 By default, django-simple-history keeps all indices. and even forces them on unique fields and relations.
 WARNING: This will drop performance on historical lookups
 
