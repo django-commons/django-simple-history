@@ -2985,3 +2985,19 @@ class HistoricOneToOneFieldTest(TestCase):
         )
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "original")
+
+    def test_hasattr_missing_reverse_onetoone_does_not_raise(self):
+        """
+        Regression test for https://github.com/django-commons/django-simple-history/issues/1588
+
+        When a HistoricOneToOneField reverse relation does not exist,
+        hasattr() should return False instead of raising DoesNotExist.
+        """
+        org = TestOrganizationWithHistory.objects.create(name="lonely_org")
+        t1 = timezone.now()
+        # No participant created — reverse OneToOne is missing
+        historic_org = TestOrganizationWithHistory.history.as_of(t1).get(
+            name="lonely_org"
+        )
+        # Before the fix this raised HistoricalTestHistoricParticipanToHistoricOrganizationOneToOne.DoesNotExist
+        self.assertFalse(hasattr(historic_org, "historic_participant"))

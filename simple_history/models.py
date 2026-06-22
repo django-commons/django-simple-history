@@ -980,6 +980,34 @@ class HistoricReverseOneToOneDescriptor(
     def get_related_model(self):
         return self.related.related_model
 
+    def __get__(self, instance, cls=None):
+        if instance is None:
+            return self
+
+        try:
+            rel_obj = self.related.get_cached_value(instance)
+        except KeyError:
+            if instance.pk is None:
+                rel_obj = None
+            else:
+                filter_args = self.related.field.get_forward_related_filter(instance)
+                queryset = self.get_queryset(instance=instance)
+                try:
+                    rel_obj = queryset.get(**filter_args)
+                except queryset.model.DoesNotExist:
+                    rel_obj = None
+                else:
+                    self.related.field.set_cached_value(rel_obj, instance)
+            self.related.set_cached_value(instance, rel_obj)
+
+        if rel_obj is None:
+            raise self.RelatedObjectDoesNotExist(
+                "%s has no %s."
+                % (instance.__class__.__name__, self.related.accessor_name)
+            )
+        else:
+            return rel_obj
+
 
 class HistoricOneToOneField(models.OneToOneField):
     """
