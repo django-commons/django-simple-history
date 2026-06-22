@@ -94,6 +94,7 @@ from ..models import (
     PollWithExcludedFKField,
     PollWithExcludeFields,
     PollWithHistoricalIPAddress,
+    PollWithHistoricalSessionAttr,
     PollWithManyToMany,
     PollWithManyToManyCustomHistoryID,
     PollWithManyToManyWithIPAddress,
@@ -932,6 +933,31 @@ class HistoricalRecordsTest(HistoricalTestCase):
             new_record,
         )
         self.assertEqual(delta, expected_delta)
+
+    def test_history_diff_includes_custom_base_fields(self):
+        """Fields added via a custom base class (the `bases` parameter) should
+        be included in `diff_against()` results.  Regression test for #1582."""
+        p = PollWithHistoricalSessionAttr.objects.create(question="what's up?")
+        p.question = "what's up, bro?"
+        p.save()
+        new_record, old_record = p.history.all()
+
+        # Manually set different values for the custom base field
+        old_record.session = "session-old"
+        old_record.save()
+        new_record.session = "session-new"
+        new_record.save()
+
+        delta = new_record.diff_against(old_record)
+        changed_field_names = delta.changed_fields
+        # The 'session' field from the custom base should appear in the diff
+        self.assertIn("session", changed_field_names)
+        # The tracked model field change should also still appear
+        self.assertIn("question", changed_field_names)
+
+        session_change = next(c for c in delta.changes if c.field == "session")
+        self.assertEqual(session_change.old, "session-old")
+        self.assertEqual(session_change.new, "session-new")
 
     def test_history_with_unknown_field(self):
         p = Poll.objects.create(question="what's up?", pub_date=today)
