@@ -153,12 +153,26 @@ class HistoricalRecords:
         if excluded_field_kwargs is None:
             excluded_field_kwargs = {}
         self.excluded_field_kwargs = excluded_field_kwargs
+
+        if bases == (models.Model,):
+            custom_bases = getattr(settings, "SIMPLE_HISTORY_CUSTOM_BASES", None)
+            if custom_bases is not None:
+                bases = custom_bases
+
         try:
             if isinstance(bases, str):
                 raise TypeError
             self.bases = (HistoricalChanges,) + tuple(bases)
         except TypeError:
             raise TypeError("The `bases` option must be a list or a tuple.")
+
+        if m2m_bases == (models.Model,):
+            custom_m2m_bases = getattr(
+                settings, "SIMPLE_HISTORY_CUSTOM_M2M_BASES", None
+            )
+            if custom_m2m_bases is not None:
+                m2m_bases = custom_m2m_bases
+
         try:
             if isinstance(m2m_bases, str):
                 raise TypeError

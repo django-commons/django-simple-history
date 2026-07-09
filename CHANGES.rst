@@ -4,6 +4,11 @@ Changes
 Unreleased
 ----------
 
+- Added ``SIMPLE_HISTORY_CUSTOM_BASES`` setting to specify default base classes
+  for historical models (gh-1574)
+- Added ``SIMPLE_HISTORY_CUSTOM_M2M_BASES`` setting to specify default base classes
+  for M2M historical models (gh-1574)
+
 
 3.12.0 (2026-06-22)
 -------------------
