@@ -2,7 +2,10 @@ import dataclasses
 import unittest
 import uuid
 import warnings
+from collections import defaultdict
+from collections.abc import Iterable
 from datetime import datetime, timedelta
+from typing import TypeVar
 
 from django.apps import apps
 from django.conf import settings
@@ -42,6 +45,8 @@ from ..models import (
     AbstractBase,
     AdminProfile,
     BasePlace,
+    BaseTestOrganization,
+    BaseTestParticipantToOrganization,
     Book,
     Bookcase,
     BucketData,
@@ -132,6 +137,9 @@ from .utils import (
     database_router_override_settings_history_in_diff_db,
     middleware_override_settings,
 )
+
+TestOrganizationT = TypeVar("TestOrganizationT", bound=BaseTestOrganization)
+TestParticipantT = TypeVar("TestParticipantT", bound=BaseTestParticipantToOrganization)
 
 get_model = apps.get_model
 User = get_user_model()
@@ -2859,98 +2867,88 @@ class HistoricForeignKeyTest(TestCase):
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "original")
 
+    @staticmethod
+    def create_objects_for_prefetch_testing(
+        *,
+        org_model: type[TestOrganizationT],
+        participant_model: type[TestParticipantT],
+        expected_num_queries: int,
+    ) -> dict[TestOrganizationT, list[TestParticipantT]]:
+        org_to_participants: dict[TestOrganizationT, list[TestParticipantT]] = (
+            defaultdict(list)
+        )
+        # Create one more object than the expected number of DB queries, so that if
+        # the test passes, it's a strong indication that the tested query doesn't have
+        # N+1 issues
+        for org_i in range(expected_num_queries + 1):
+            org = org_model.objects.create(name=f"org{org_i + 1}")
+            for i in range(2):
+                participant = participant_model.objects.create(
+                    organization=org,
+                    name=f"{org.name} p{i + 1}",
+                )
+                org_to_participants[org].append(participant)
+
+        return dict(org_to_participants)
+
     def test_non_historic_to_historic_prefetch(self):
-        org1 = TestOrganizationWithHistory.objects.create(name="org1")
-        org2 = TestOrganizationWithHistory.objects.create(name="org2")
-
-        p1 = TestParticipantToHistoricOrganization.objects.create(
-            name="p1", organization=org1
-        )
-        p2 = TestParticipantToHistoricOrganization.objects.create(
-            name="p2", organization=org1
-        )
-        p3 = TestParticipantToHistoricOrganization.objects.create(
-            name="p3", organization=org2
-        )
-        p4 = TestParticipantToHistoricOrganization.objects.create(
-            name="p4", organization=org2
+        """Test that ``HistoricForeignKey`` works correctly with ``prefetch_related()``
+        when defined on a model *without* history tracking, and with its ``to`` arg set
+        to a model *with* history tracking.
+        """
+        expected_queries = 2
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=TestOrganizationWithHistory,
+            participant_model=TestParticipantToHistoricOrganization,
+            expected_num_queries=expected_queries,
         )
 
-        with self.assertNumQueries(2):
-            record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
-                "participants"
-            )
-
-            self.assertListEqual(
-                [p.name for p in record1.participants.all()],
-                [p1.name, p2.name],
-            )
-            self.assertListEqual(
-                [p.name for p in record2.participants.all()],
-                [p3.name, p4.name],
-            )
+        with self.assertNumQueries(expected_queries):
+            orgs = TestOrganizationWithHistory.objects.prefetch_related("participants")
+            prefetched_org_to_participants = {
+                org: list(org.participants.all()) for org in orgs
+            }
+            self.assertDictEqual(prefetched_org_to_participants, org_to_participants)
 
     def test_historic_to_non_historic_prefetch(self):
-        org1 = TestOrganization.objects.create(name="org1")
-        org2 = TestOrganization.objects.create(name="org2")
-
-        p1 = TestHistoricParticipantToOrganization.objects.create(
-            name="p1", organization=org1
-        )
-        p2 = TestHistoricParticipantToOrganization.objects.create(
-            name="p2", organization=org1
-        )
-        p3 = TestHistoricParticipantToOrganization.objects.create(
-            name="p3", organization=org2
-        )
-        p4 = TestHistoricParticipantToOrganization.objects.create(
-            name="p4", organization=org2
+        """Test that ``HistoricForeignKey`` works correctly with ``prefetch_related()``
+        when defined on a model *with* history tracking, and with its ``to`` arg set
+        to a model *without* history tracking.
+        """
+        expected_queries = 2
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=TestOrganization,
+            participant_model=TestHistoricParticipantToOrganization,
+            expected_num_queries=expected_queries,
         )
 
-        with self.assertNumQueries(2):
-            record1, record2 = TestOrganization.objects.prefetch_related(
-                "participants"
-            )
-
-            self.assertListEqual(
-                [p.name for p in record1.participants.all()],
-                [p1.name, p2.name],
-            )
-            self.assertListEqual(
-                [p.name for p in record2.participants.all()],
-                [p3.name, p4.name],
-            )
+        with self.assertNumQueries(expected_queries):
+            orgs = TestOrganization.objects.prefetch_related("participants")
+            prefetched_org_to_participants = {
+                org: list(org.participants.all()) for org in orgs
+            }
+            self.assertDictEqual(prefetched_org_to_participants, org_to_participants)
 
     def test_historic_to_historic_prefetch(self):
-        org1 = TestOrganizationWithHistory.objects.create(name="org1")
-        org2 = TestOrganizationWithHistory.objects.create(name="org2")
-
-        p1 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p1", organization=org1
-        )
-        p2 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p2", organization=org1
-        )
-        p3 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p3", organization=org2
-        )
-        p4 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p4", organization=org2
+        """Test that ``HistoricForeignKey`` works correctly with ``prefetch_related()``
+        when defined on a model with history tracking, and with its ``to`` arg set
+        to a model that also has history tracking.
+        """
+        expected_queries = 2
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=TestOrganizationWithHistory,
+            participant_model=TestHistoricParticipantToHistoricOrganization,
+            expected_num_queries=expected_queries,
         )
 
-        with self.assertNumQueries(2):
-            record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
+        with self.assertNumQueries(expected_queries):
+            orgs = TestOrganizationWithHistory.objects.prefetch_related(
                 "historic_participants"
             )
-
-            self.assertListEqual(
-                [p.name for p in record1.historic_participants.all()],
-                [p1.name, p2.name],
-            )
-            self.assertListEqual(
-                [p.name for p in record2.historic_participants.all()],
-                [p3.name, p4.name],
-            )
+            prefetched_org_to_participants = {
+                org: list(org.historic_participants.all()) for org in orgs
+            }
+            self.assertDictEqual(prefetched_org_to_participants, org_to_participants)
 
     def test_nested_prefetch_across_historic_foreign_keys(self):
         """Nested ``prefetch_related()`` across two ``HistoricForeignKey`` reverse
@@ -2960,75 +2958,66 @@ class HistoricForeignKeyTest(TestCase):
         ``prefetch_related("a__b")`` form would silently return an empty
         related set for parents other than the first.
         """
-        org1 = TestOrganizationWithHistory.objects.create(name="org1")
-        org2 = TestOrganizationWithHistory.objects.create(name="org2")
+        # Shorter aliases
+        Organization = TestOrganizationWithHistory
+        Participant = TestHistoricParticipantToHistoricOrganization
+        SubParticipant = TestHistoricSubParticipantToHistoricParticipant
 
-        p1 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p1", organization=org1
-        )
-        p2 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p2", organization=org1
-        )
-        p3 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p3", organization=org2
-        )
-        p4 = TestHistoricParticipantToHistoricOrganization.objects.create(
-            name="p4", organization=org2
-        )
+        def create_sub_participants(participant: Participant) -> list[SubParticipant]:
+            return [
+                SubParticipant.objects.create(
+                    participant=participant,
+                    name=f"{participant.name} sub{i + 1}",
+                )
+                for i in range(2)
+            ]
 
-        sub_names = {
-            p.id: [f"{p.name}-sub1", f"{p.name}-sub2"] for p in (p1, p2, p3, p4)
+        expected_queries = 3
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=Organization,
+            participant_model=Participant,
+            expected_num_queries=expected_queries,
+        )
+        org_to_nested_participants: dict[
+            Organization, list[dict[Participant, list[SubParticipant]]]
+        ] = {
+            org: [{p: create_sub_participants(p)} for p in participants]
+            for org, participants in org_to_participants.items()
         }
-        for participant in (p1, p2, p3, p4):
-            for sub_name in sub_names[participant.id]:
-                TestHistoricSubParticipantToHistoricParticipant.objects.create(
-                    name=sub_name, participant=participant
+
+        def assert_prefetched_orgs_have_expected_participants(
+            orgs: Iterable[Organization],
+        ) -> None:
+            with self.assertNumQueries(expected_queries):
+                prefetched_org_to_nested_participants = {
+                    org: [
+                        {p: list(p.historic_sub_participants.all())}
+                        for p in org.historic_participants.all()
+                    ]
+                    for org in orgs
+                }
+                self.assertDictEqual(
+                    prefetched_org_to_nested_participants, org_to_nested_participants
                 )
 
         # Bare nested prefetch (the form that previously regressed).
-        with self.assertNumQueries(3):
-            record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
+        assert_prefetched_orgs_have_expected_participants(
+            Organization.objects.prefetch_related(
                 "historic_participants__historic_sub_participants"
             )
-
-            for org, expected_participants in (
-                (record1, (p1, p2)),
-                (record2, (p3, p4)),
-            ):
-                participants = list(org.historic_participants.all())
-                self.assertEqual(len(participants), 2)
-                for participant, expected in zip(participants, expected_participants):
-                    self.assertEqual(participant.name, expected.name)
-                    self.assertListEqual(
-                        [s.name for s in participant.historic_sub_participants.all()],
-                        sub_names[expected.id],
-                    )
+        )
 
         # Equivalent fully-explicit form using `Prefetch` objects, which
         # already worked before the fix.
-        sub_qs = TestHistoricSubParticipantToHistoricParticipant.objects.all()
-        participant_qs = (
-            TestHistoricParticipantToHistoricOrganization.objects.prefetch_related(
-                Prefetch("historic_sub_participants", queryset=sub_qs)
-            )
+        sub_qs = SubParticipant.objects.all()
+        participant_qs = Participant.objects.prefetch_related(
+            Prefetch("historic_sub_participants", queryset=sub_qs)
         )
-        with self.assertNumQueries(3):
-            record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
+        assert_prefetched_orgs_have_expected_participants(
+            Organization.objects.prefetch_related(
                 Prefetch("historic_participants", queryset=participant_qs)
             )
-
-            for org, expected_participants in (
-                (record1, (p1, p2)),
-                (record2, (p3, p4)),
-            ):
-                participants = list(org.historic_participants.all())
-                self.assertEqual(len(participants), 2)
-                for participant, expected in zip(participants, expected_participants):
-                    self.assertEqual(participant.name, expected.name)
-                    self.assertListEqual(
-                        [s.name for s in participant.historic_sub_participants.all()],
-                        sub_names[expected.id],
-                    )
+        )
 
 
 class HistoricOneToOneFieldTest(TestCase):
