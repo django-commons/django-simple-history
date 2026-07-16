@@ -965,7 +965,7 @@ class TestHistoricParticipantToOrganization(models.Model):
     history = HistoricalRecords()
 
 
-class TestHistoricParticipanToHistoricOrganization(models.Model):
+class TestHistoricParticipantToHistoricOrganization(models.Model):
     """
     Historic table foreign key to historic table.
 
@@ -992,13 +992,13 @@ class TestHistoricParticipanToHistoricOrganization(models.Model):
 class TestHistoricSubParticipantToHistoricParticipant(models.Model):
     """
     Historic table foreign key to a historic table that itself has a
-    HistoricForeignKey - used to exercise nested prefetch_related across
-    two levels of HistoricForeignKey.
+    ``HistoricForeignKey`` - used to exercise nested ``prefetch_related()`` across
+    two levels of ``HistoricForeignKey``.
     """
 
     name = models.CharField(max_length=15, unique=True)
     participant = HistoricForeignKey(
-        TestHistoricParticipanToHistoricOrganization,
+        TestHistoricParticipantToHistoricOrganization,
         on_delete=CASCADE,
         related_name="historic_sub_participants",
     )
@@ -1036,7 +1036,7 @@ class TestHistoricParticipantToOrganizationOneToOne(models.Model):
     history = HistoricalRecords()
 
 
-class TestHistoricParticipanToHistoricOrganizationOneToOne(models.Model):
+class TestHistoricParticipantToHistoricOrganizationOneToOne(models.Model):
     """
     Historic table with one to one relationship to historic table.
 

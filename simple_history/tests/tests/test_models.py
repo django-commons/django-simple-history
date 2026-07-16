@@ -110,8 +110,8 @@ from ..models import (
     State,
     Street,
     Temperature,
-    TestHistoricParticipanToHistoricOrganization,
-    TestHistoricParticipanToHistoricOrganizationOneToOne,
+    TestHistoricParticipantToHistoricOrganization,
+    TestHistoricParticipantToHistoricOrganizationOneToOne,
     TestHistoricParticipantToOrganization,
     TestHistoricParticipantToOrganizationOneToOne,
     TestHistoricSubParticipantToHistoricParticipant,
@@ -2785,11 +2785,11 @@ class HistoricForeignKeyTest(TestCase):
         At t3 we have one org, and one participant has left.
         """
         org = TestOrganizationWithHistory.objects.create(name="original")
-        p1 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p1 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p1", organization=org
         )
         t1_one_participant = timezone.now()
-        p2 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p2 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p2", organization=org
         )
         org.name = "modified"
@@ -2799,22 +2799,22 @@ class HistoricForeignKeyTest(TestCase):
         t3_one_participant = timezone.now()
 
         # forward relationships - see how natural chasing timepoint relations is
-        p1t1 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p1t1 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t1_one_participant
         ).get(name="p1")
         self.assertEqual(p1t1.organization, org)
         self.assertEqual(p1t1.organization.name, "original")
-        p1t2 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p1t2 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t2_two_participants
         ).get(name="p1")
         self.assertEqual(p1t2.organization, org)
         self.assertEqual(p1t2.organization.name, "modified")
-        p2t2 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p2t2 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t2_two_participants
         ).get(name="p2")
         self.assertEqual(p2t2.organization, org)
         self.assertEqual(p2t2.organization.name, "modified")
-        p2t3 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p2t3 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t3_one_participant
         ).get(name="p2")
         self.assertEqual(p2t3.organization, org)
@@ -2850,10 +2850,10 @@ class HistoricForeignKeyTest(TestCase):
         # to an instance, it should chase the foreign key properly
         # in this case if _as_of is not present we use the history_date
         # https://github.com/django-commons/django-simple-history/issues/983
-        pt1h = TestHistoricParticipanToHistoricOrganization.history.all()[0]
+        pt1h = TestHistoricParticipantToHistoricOrganization.history.all()[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "modified")
-        pt1h = TestHistoricParticipanToHistoricOrganization.history.all().order_by(
+        pt1h = TestHistoricParticipantToHistoricOrganization.history.all().order_by(
             "history_date"
         )[0]
         pt1i = pt1h.instance
@@ -2879,7 +2879,7 @@ class HistoricForeignKeyTest(TestCase):
         with self.assertNumQueries(2):
             record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
                 "participants"
-            ).all()
+            )
 
             self.assertListEqual(
                 [p.name for p in record1.participants.all()],
@@ -2910,7 +2910,7 @@ class HistoricForeignKeyTest(TestCase):
         with self.assertNumQueries(2):
             record1, record2 = TestOrganization.objects.prefetch_related(
                 "participants"
-            ).all()
+            )
 
             self.assertListEqual(
                 [p.name for p in record1.participants.all()],
@@ -2925,23 +2925,23 @@ class HistoricForeignKeyTest(TestCase):
         org1 = TestOrganizationWithHistory.objects.create(name="org1")
         org2 = TestOrganizationWithHistory.objects.create(name="org2")
 
-        p1 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p1 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p1", organization=org1
         )
-        p2 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p2 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p2", organization=org1
         )
-        p3 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p3 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p3", organization=org2
         )
-        p4 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p4 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p4", organization=org2
         )
 
         with self.assertNumQueries(2):
             record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
                 "historic_participants"
-            ).all()
+            )
 
             self.assertListEqual(
                 [p.name for p in record1.historic_participants.all()],
@@ -2953,7 +2953,7 @@ class HistoricForeignKeyTest(TestCase):
             )
 
     def test_nested_prefetch_across_historic_foreign_keys(self):
-        """Nested ``prefetch_related`` across two HistoricForeignKey reverse
+        """Nested ``prefetch_related()`` across two ``HistoricForeignKey`` reverse
         relations should populate the cache for every parent at each level.
 
         Regression test for the ``SubSub`` case in #1152: the bare
@@ -2963,16 +2963,16 @@ class HistoricForeignKeyTest(TestCase):
         org1 = TestOrganizationWithHistory.objects.create(name="org1")
         org2 = TestOrganizationWithHistory.objects.create(name="org2")
 
-        p1 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p1 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p1", organization=org1
         )
-        p2 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p2 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p2", organization=org1
         )
-        p3 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p3 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p3", organization=org2
         )
-        p4 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p4 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p4", organization=org2
         )
 
@@ -2989,7 +2989,7 @@ class HistoricForeignKeyTest(TestCase):
         with self.assertNumQueries(3):
             record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
                 "historic_participants__historic_sub_participants"
-            ).all()
+            )
 
             for org, expected_participants in (
                 (record1, (p1, p2)),
@@ -3004,18 +3004,18 @@ class HistoricForeignKeyTest(TestCase):
                         sub_names[expected.id],
                     )
 
-        # Equivalent fully-explicit form using ``Prefetch`` objects, which
+        # Equivalent fully-explicit form using `Prefetch` objects, which
         # already worked before the fix.
         sub_qs = TestHistoricSubParticipantToHistoricParticipant.objects.all()
         participant_qs = (
-            TestHistoricParticipanToHistoricOrganization.objects.prefetch_related(
+            TestHistoricParticipantToHistoricOrganization.objects.prefetch_related(
                 Prefetch("historic_sub_participants", queryset=sub_qs)
             )
         )
         with self.assertNumQueries(3):
             record1, record2 = TestOrganizationWithHistory.objects.prefetch_related(
                 Prefetch("historic_participants", queryset=participant_qs)
-            ).all()
+            )
 
             for org, expected_participants in (
                 (record1, (p1, p2)),
@@ -3102,7 +3102,7 @@ class HistoricOneToOneFieldTest(TestCase):
         """
         org = TestOrganizationWithHistory.objects.create(name="original")
 
-        p1 = TestHistoricParticipanToHistoricOrganizationOneToOne.objects.create(
+        p1 = TestHistoricParticipantToHistoricOrganizationOneToOne.objects.create(
             name="p1", organization=org
         )
         t1 = timezone.now()
@@ -3113,12 +3113,12 @@ class HistoricOneToOneFieldTest(TestCase):
         t2 = timezone.now()
 
         # forward relationships - see how natural chasing timepoint relations is
-        p1t1 = TestHistoricParticipanToHistoricOrganizationOneToOne.history.as_of(
+        p1t1 = TestHistoricParticipantToHistoricOrganizationOneToOne.history.as_of(
             t1
         ).get(name="p1")
         self.assertEqual(p1t1.organization, org)
         self.assertEqual(p1t1.organization.name, "original")
-        p1t2 = TestHistoricParticipanToHistoricOrganizationOneToOne.history.as_of(
+        p1t2 = TestHistoricParticipantToHistoricOrganizationOneToOne.history.as_of(
             t2
         ).get(name="p1_modified")
         self.assertEqual(p1t2.organization, org)
@@ -3148,13 +3148,11 @@ class HistoricOneToOneFieldTest(TestCase):
         # to an instance, it should chase the foreign key properly
         # in this case if _as_of is not present we use the history_date
         # https://github.com/django-commons/django-simple-history/issues/983
-        pt1h = TestHistoricParticipanToHistoricOrganizationOneToOne.history.all()[0]
+        pt1h = TestHistoricParticipantToHistoricOrganizationOneToOne.history.all()[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "modified")
-        pt1h = (
-            TestHistoricParticipanToHistoricOrganizationOneToOne.history.all().order_by(
-                "history_date"
-            )[0]
-        )
+        pt1h = TestHistoricParticipantToHistoricOrganizationOneToOne.history.order_by(
+            "history_date"
+        )[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "original")

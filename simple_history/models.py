@@ -24,7 +24,6 @@ from django.db.models.fields.related_descriptors import (
     ReverseOneToOneDescriptor,
     create_reverse_many_to_one_manager,
 )
-from django.db.models.query import QuerySet
 from django.db.models.signals import m2m_changed
 from django.forms.models import model_to_dict
 from django.urls import reverse
@@ -900,16 +899,16 @@ class HistoricReverseManyToOneDescriptor(ReverseManyToOneDescriptor):
 
         class HistoricRelationModelManager(related_model._default_manager.__class__):
             def get_queryset(self):
-                # The outer ``RelatedManager`` (created by
-                # ``create_reverse_many_to_one_manager``) already short-circuits
-                # to ``self.instance._prefetched_objects_cache`` when a prefetch
-                # cache exists, so we don't repeat that check here. We also
-                # don't call ``_apply_rel_filters`` (the outer manager applies
-                # it for the non-prefetch path; the prefetch path adds its own
-                # ``IN (...)`` filter and must not see the per-instance
-                # equality clause). The only thing this override needs to add
-                # is historic ``as_of`` queryset construction when the parent
-                # instance was loaded via a historic timepoint.
+                # The outer `RelatedManager` (created by
+                # `create_reverse_many_to_one_manager()`) already short-circuits to
+                # `self.instance._prefetched_objects_cache` when a prefetch cache
+                # exists, so we don't repeat that check here. We also don't call
+                # `_apply_rel_filters()` (the outer manager applies it for
+                # the non-prefetch path; the prefetch path adds its own `IN (...)`
+                # filter and must not see the per-instance equality clause).
+                # The only thing this override needs to add is historic `as_of()`
+                # queryset construction when the parent instance was loaded via
+                # a historic timepoint.
                 history = getattr(self.instance, SIMPLE_HISTORY_REVERSE_ATTR_NAME, None)
                 histmgr = getattr(
                     self.model,
