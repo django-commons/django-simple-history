@@ -925,16 +925,41 @@ class ModelWithMultipleNoDBIndex(models.Model):
     history = HistoricalRecords(no_db_index=["name", "fk", "other"])
 
 
-class TestOrganization(models.Model):
+class BaseTestOrganization(models.Model):
+    """Abstract base model for the various organization models below."""
+
     name = models.CharField(max_length=15, unique=True)
 
+    class Meta:
+        abstract = True
 
-class TestOrganizationWithHistory(models.Model):
-    name = models.CharField(max_length=15, unique=True)
+    def __str__(self) -> str:
+        return self.name
+
+
+class TestOrganization(BaseTestOrganization):
+    pass
+
+
+class TestOrganizationWithHistory(BaseTestOrganization):
     history = HistoricalRecords()
 
 
-class TestParticipantToHistoricOrganization(models.Model):
+class BaseTestParticipantToOrganization(models.Model):
+    """Abstract base model for the various "participant belonging to an organization"
+    models below."""
+
+    name = models.CharField(max_length=15, unique=True)
+    organization: HistoricForeignKey | HistoricOneToOneField
+
+    class Meta:
+        abstract = True
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class TestParticipantToHistoricOrganization(BaseTestParticipantToOrganization):
     """
     Non-historic table foreign key to historic table.
 
@@ -943,13 +968,12 @@ class TestParticipantToHistoricOrganization(models.Model):
     lookups are always "current".
     """
 
-    name = models.CharField(max_length=15, unique=True)
     organization = HistoricForeignKey(
         TestOrganizationWithHistory, on_delete=CASCADE, related_name="participants"
     )
 
 
-class TestHistoricParticipantToOrganization(models.Model):
+class TestHistoricParticipantToOrganization(BaseTestParticipantToOrganization):
     """
     Historic table foreign key to non-historic table.
 
@@ -958,14 +982,13 @@ class TestHistoricParticipantToOrganization(models.Model):
     is not, so foreign key lookups are always "current".
     """
 
-    name = models.CharField(max_length=15, unique=True)
     organization = HistoricForeignKey(
         TestOrganization, on_delete=CASCADE, related_name="participants"
     )
     history = HistoricalRecords()
 
 
-class TestHistoricParticipanToHistoricOrganization(models.Model):
+class TestHistoricParticipantToHistoricOrganization(BaseTestParticipantToOrganization):
     """
     Historic table foreign key to historic table.
 
@@ -980,7 +1003,6 @@ class TestHistoricParticipanToHistoricOrganization(models.Model):
           sharing the same target table.
     """
 
-    name = models.CharField(max_length=15, unique=True)
     organization = HistoricForeignKey(
         TestOrganizationWithHistory,
         on_delete=CASCADE,
@@ -989,7 +1011,26 @@ class TestHistoricParticipanToHistoricOrganization(models.Model):
     history = HistoricalRecords()
 
 
-class TestParticipantToHistoricOrganizationOneToOne(models.Model):
+class TestHistoricSubParticipantToHistoricParticipant(models.Model):
+    """
+    Historic table foreign key to a historic table that itself has a
+    ``HistoricForeignKey`` - used to exercise nested ``prefetch_related()`` across
+    two levels of ``HistoricForeignKey``.
+    """
+
+    name = models.CharField(max_length=15, unique=True)
+    participant = HistoricForeignKey(
+        TestHistoricParticipantToHistoricOrganization,
+        on_delete=CASCADE,
+        related_name="historic_sub_participants",
+    )
+    history = HistoricalRecords()
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class TestParticipantToHistoricOrganizationOneToOne(BaseTestParticipantToOrganization):
     """
     Non-historic table with one to one relationship to historic table.
 
@@ -998,13 +1039,12 @@ class TestParticipantToHistoricOrganizationOneToOne(models.Model):
     lookups are always "current".
     """
 
-    name = models.CharField(max_length=15, unique=True)
     organization = HistoricOneToOneField(
         TestOrganizationWithHistory, on_delete=CASCADE, related_name="participant"
     )
 
 
-class TestHistoricParticipantToOrganizationOneToOne(models.Model):
+class TestHistoricParticipantToOrganizationOneToOne(BaseTestParticipantToOrganization):
     """
     Historic table with one to one relationship to non-historic table.
 
@@ -1013,14 +1053,15 @@ class TestHistoricParticipantToOrganizationOneToOne(models.Model):
     lookups are always "current".
     """
 
-    name = models.CharField(max_length=15, unique=True)
     organization = HistoricOneToOneField(
         TestOrganization, on_delete=CASCADE, related_name="participant"
     )
     history = HistoricalRecords()
 
 
-class TestHistoricParticipanToHistoricOrganizationOneToOne(models.Model):
+class TestHistoricParticipantToHistoricOrganizationOneToOne(
+    BaseTestParticipantToOrganization
+):
     """
     Historic table with one to one relationship to historic table.
 
@@ -1035,7 +1076,6 @@ class TestHistoricParticipanToHistoricOrganizationOneToOne(models.Model):
           sharing the same target table.
     """
 
-    name = models.CharField(max_length=15, unique=True)
     organization = HistoricOneToOneField(
         TestOrganizationWithHistory,
         on_delete=CASCADE,

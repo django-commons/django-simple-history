@@ -2,7 +2,10 @@ import dataclasses
 import unittest
 import uuid
 import warnings
+from collections import defaultdict
+from collections.abc import Iterable
 from datetime import datetime, timedelta
+from typing import TypeVar
 
 from django.apps import apps
 from django.conf import settings
@@ -10,6 +13,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, models
+from django.db.models import Prefetch
 from django.db.models.fields.proxy import OrderWrt
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -41,6 +45,8 @@ from ..models import (
     AbstractBase,
     AdminProfile,
     BasePlace,
+    BaseTestOrganization,
+    BaseTestParticipantToOrganization,
     Book,
     Bookcase,
     BucketData,
@@ -109,10 +115,11 @@ from ..models import (
     State,
     Street,
     Temperature,
-    TestHistoricParticipanToHistoricOrganization,
-    TestHistoricParticipanToHistoricOrganizationOneToOne,
+    TestHistoricParticipantToHistoricOrganization,
+    TestHistoricParticipantToHistoricOrganizationOneToOne,
     TestHistoricParticipantToOrganization,
     TestHistoricParticipantToOrganizationOneToOne,
+    TestHistoricSubParticipantToHistoricParticipant,
     TestOrganization,
     TestOrganizationWithHistory,
     TestParticipantToHistoricOrganization,
@@ -130,6 +137,9 @@ from .utils import (
     database_router_override_settings_history_in_diff_db,
     middleware_override_settings,
 )
+
+TestOrganizationT = TypeVar("TestOrganizationT", bound=BaseTestOrganization)
+TestParticipantT = TypeVar("TestParticipantT", bound=BaseTestParticipantToOrganization)
 
 get_model = apps.get_model
 User = get_user_model()
@@ -2783,11 +2793,11 @@ class HistoricForeignKeyTest(TestCase):
         At t3 we have one org, and one participant has left.
         """
         org = TestOrganizationWithHistory.objects.create(name="original")
-        p1 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p1 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p1", organization=org
         )
         t1_one_participant = timezone.now()
-        p2 = TestHistoricParticipanToHistoricOrganization.objects.create(
+        p2 = TestHistoricParticipantToHistoricOrganization.objects.create(
             name="p2", organization=org
         )
         org.name = "modified"
@@ -2797,22 +2807,22 @@ class HistoricForeignKeyTest(TestCase):
         t3_one_participant = timezone.now()
 
         # forward relationships - see how natural chasing timepoint relations is
-        p1t1 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p1t1 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t1_one_participant
         ).get(name="p1")
         self.assertEqual(p1t1.organization, org)
         self.assertEqual(p1t1.organization.name, "original")
-        p1t2 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p1t2 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t2_two_participants
         ).get(name="p1")
         self.assertEqual(p1t2.organization, org)
         self.assertEqual(p1t2.organization.name, "modified")
-        p2t2 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p2t2 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t2_two_participants
         ).get(name="p2")
         self.assertEqual(p2t2.organization, org)
         self.assertEqual(p2t2.organization.name, "modified")
-        p2t3 = TestHistoricParticipanToHistoricOrganization.history.as_of(
+        p2t3 = TestHistoricParticipantToHistoricOrganization.history.as_of(
             t3_one_participant
         ).get(name="p2")
         self.assertEqual(p2t3.organization, org)
@@ -2848,14 +2858,166 @@ class HistoricForeignKeyTest(TestCase):
         # to an instance, it should chase the foreign key properly
         # in this case if _as_of is not present we use the history_date
         # https://github.com/django-commons/django-simple-history/issues/983
-        pt1h = TestHistoricParticipanToHistoricOrganization.history.all()[0]
+        pt1h = TestHistoricParticipantToHistoricOrganization.history.all()[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "modified")
-        pt1h = TestHistoricParticipanToHistoricOrganization.history.all().order_by(
+        pt1h = TestHistoricParticipantToHistoricOrganization.history.all().order_by(
             "history_date"
         )[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "original")
+
+    @staticmethod
+    def create_objects_for_prefetch_testing(
+        *,
+        org_model: type[TestOrganizationT],
+        participant_model: type[TestParticipantT],
+        expected_num_queries: int,
+    ) -> dict[TestOrganizationT, list[TestParticipantT]]:
+        org_to_participants: dict[TestOrganizationT, list[TestParticipantT]] = (
+            defaultdict(list)
+        )
+        # Create one more object than the expected number of DB queries, so that if
+        # the test passes, it's a strong indication that the tested query doesn't have
+        # N+1 issues
+        for org_i in range(expected_num_queries + 1):
+            org = org_model.objects.create(name=f"org{org_i + 1}")
+            for i in range(2):
+                participant = participant_model.objects.create(
+                    organization=org,
+                    name=f"{org.name} p{i + 1}",
+                )
+                org_to_participants[org].append(participant)
+
+        return dict(org_to_participants)
+
+    def test_non_historic_to_historic_prefetch(self):
+        """Test that ``HistoricForeignKey`` works correctly with ``prefetch_related()``
+        when defined on a model *without* history tracking, and with its ``to`` arg set
+        to a model *with* history tracking.
+        """
+        expected_queries = 2
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=TestOrganizationWithHistory,
+            participant_model=TestParticipantToHistoricOrganization,
+            expected_num_queries=expected_queries,
+        )
+
+        with self.assertNumQueries(expected_queries):
+            orgs = TestOrganizationWithHistory.objects.prefetch_related("participants")
+            prefetched_org_to_participants = {
+                org: list(org.participants.all()) for org in orgs
+            }
+            self.assertDictEqual(prefetched_org_to_participants, org_to_participants)
+
+    def test_historic_to_non_historic_prefetch(self):
+        """Test that ``HistoricForeignKey`` works correctly with ``prefetch_related()``
+        when defined on a model *with* history tracking, and with its ``to`` arg set
+        to a model *without* history tracking.
+        """
+        expected_queries = 2
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=TestOrganization,
+            participant_model=TestHistoricParticipantToOrganization,
+            expected_num_queries=expected_queries,
+        )
+
+        with self.assertNumQueries(expected_queries):
+            orgs = TestOrganization.objects.prefetch_related("participants")
+            prefetched_org_to_participants = {
+                org: list(org.participants.all()) for org in orgs
+            }
+            self.assertDictEqual(prefetched_org_to_participants, org_to_participants)
+
+    def test_historic_to_historic_prefetch(self):
+        """Test that ``HistoricForeignKey`` works correctly with ``prefetch_related()``
+        when defined on a model with history tracking, and with its ``to`` arg set
+        to a model that also has history tracking.
+        """
+        expected_queries = 2
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=TestOrganizationWithHistory,
+            participant_model=TestHistoricParticipantToHistoricOrganization,
+            expected_num_queries=expected_queries,
+        )
+
+        with self.assertNumQueries(expected_queries):
+            orgs = TestOrganizationWithHistory.objects.prefetch_related(
+                "historic_participants"
+            )
+            prefetched_org_to_participants = {
+                org: list(org.historic_participants.all()) for org in orgs
+            }
+            self.assertDictEqual(prefetched_org_to_participants, org_to_participants)
+
+    def test_nested_prefetch_across_historic_foreign_keys(self):
+        """Nested ``prefetch_related()`` across two ``HistoricForeignKey`` reverse
+        relations should populate the cache for every parent at each level.
+
+        Regression test for the ``SubSub`` case in #1152: the bare
+        ``prefetch_related("a__b")`` form would silently return an empty
+        related set for parents other than the first.
+        """
+        # Shorter aliases
+        Organization = TestOrganizationWithHistory
+        Participant = TestHistoricParticipantToHistoricOrganization
+        SubParticipant = TestHistoricSubParticipantToHistoricParticipant
+
+        def create_sub_participants(participant: Participant) -> list[SubParticipant]:
+            return [
+                SubParticipant.objects.create(
+                    participant=participant,
+                    name=f"{participant.name} sub{i + 1}",
+                )
+                for i in range(2)
+            ]
+
+        expected_queries = 3
+        org_to_participants = self.create_objects_for_prefetch_testing(
+            org_model=Organization,
+            participant_model=Participant,
+            expected_num_queries=expected_queries,
+        )
+        org_to_nested_participants: dict[
+            Organization, list[dict[Participant, list[SubParticipant]]]
+        ] = {
+            org: [{p: create_sub_participants(p)} for p in participants]
+            for org, participants in org_to_participants.items()
+        }
+
+        def assert_prefetched_orgs_have_expected_participants(
+            orgs: Iterable[Organization],
+        ) -> None:
+            with self.assertNumQueries(expected_queries):
+                prefetched_org_to_nested_participants = {
+                    org: [
+                        {p: list(p.historic_sub_participants.all())}
+                        for p in org.historic_participants.all()
+                    ]
+                    for org in orgs
+                }
+                self.assertDictEqual(
+                    prefetched_org_to_nested_participants, org_to_nested_participants
+                )
+
+        # Bare nested prefetch (the form that previously regressed).
+        assert_prefetched_orgs_have_expected_participants(
+            Organization.objects.prefetch_related(
+                "historic_participants__historic_sub_participants"
+            )
+        )
+
+        # Equivalent fully-explicit form using `Prefetch` objects, which
+        # already worked before the fix.
+        sub_qs = SubParticipant.objects.all()
+        participant_qs = Participant.objects.prefetch_related(
+            Prefetch("historic_sub_participants", queryset=sub_qs)
+        )
+        assert_prefetched_orgs_have_expected_participants(
+            Organization.objects.prefetch_related(
+                Prefetch("historic_participants", queryset=participant_qs)
+            )
+        )
 
 
 class HistoricOneToOneFieldTest(TestCase):
@@ -2929,7 +3091,7 @@ class HistoricOneToOneFieldTest(TestCase):
         """
         org = TestOrganizationWithHistory.objects.create(name="original")
 
-        p1 = TestHistoricParticipanToHistoricOrganizationOneToOne.objects.create(
+        p1 = TestHistoricParticipantToHistoricOrganizationOneToOne.objects.create(
             name="p1", organization=org
         )
         t1 = timezone.now()
@@ -2940,12 +3102,12 @@ class HistoricOneToOneFieldTest(TestCase):
         t2 = timezone.now()
 
         # forward relationships - see how natural chasing timepoint relations is
-        p1t1 = TestHistoricParticipanToHistoricOrganizationOneToOne.history.as_of(
+        p1t1 = TestHistoricParticipantToHistoricOrganizationOneToOne.history.as_of(
             t1
         ).get(name="p1")
         self.assertEqual(p1t1.organization, org)
         self.assertEqual(p1t1.organization.name, "original")
-        p1t2 = TestHistoricParticipanToHistoricOrganizationOneToOne.history.as_of(
+        p1t2 = TestHistoricParticipantToHistoricOrganizationOneToOne.history.as_of(
             t2
         ).get(name="p1_modified")
         self.assertEqual(p1t2.organization, org)
@@ -2975,13 +3137,11 @@ class HistoricOneToOneFieldTest(TestCase):
         # to an instance, it should chase the foreign key properly
         # in this case if _as_of is not present we use the history_date
         # https://github.com/django-commons/django-simple-history/issues/983
-        pt1h = TestHistoricParticipanToHistoricOrganizationOneToOne.history.all()[0]
+        pt1h = TestHistoricParticipantToHistoricOrganizationOneToOne.history.all()[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "modified")
-        pt1h = (
-            TestHistoricParticipanToHistoricOrganizationOneToOne.history.all().order_by(
-                "history_date"
-            )[0]
-        )
+        pt1h = TestHistoricParticipantToHistoricOrganizationOneToOne.history.order_by(
+            "history_date"
+        )[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "original")

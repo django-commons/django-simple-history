@@ -4,6 +4,8 @@ Changes
 Unreleased
 ----------
 
+- Fixed the behavior of ``HistoricForeignKey`` when used together with
+  ``prefetch_related()``, which caused some related objects to be missing (gh-1152)
 
 3.12.0 (2026-06-22)
 -------------------
