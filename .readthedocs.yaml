@@ -7,9 +7,9 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  os: ubuntu-22.04
+  os: ubuntu-lts-latest
   tools:
-    python: "3.12"
+    python: "3"
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
