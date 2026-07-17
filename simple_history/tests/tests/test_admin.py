@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from unittest.mock import ANY, patch
 
-import django
 from django.contrib.admin import AdminSite
 from django.contrib.admin.utils import quote
 from django.contrib.admin.views.main import PAGE_VAR
@@ -772,9 +771,6 @@ class AdminSiteTest(TestCase):
             "save_on_top": admin.save_on_top,
             "root_path": getattr(admin_site, "root_path", None),
         }
-        # DEV: Remove this when support for Django 4.2 has been dropped
-        if django.VERSION < (5, 0):
-            del context["log_entries"]
 
         mock_render.assert_called_once_with(
             request, admin.object_history_form_template, context
@@ -832,9 +828,6 @@ class AdminSiteTest(TestCase):
             "save_on_top": admin.save_on_top,
             "root_path": getattr(admin_site, "root_path", None),
         }
-        # DEV: Remove this when support for Django 4.2 has been dropped
-        if django.VERSION < (5, 0):
-            del context["log_entries"]
 
         mock_render.assert_called_once_with(
             request, admin.object_history_form_template, context
@@ -892,9 +885,6 @@ class AdminSiteTest(TestCase):
             "save_on_top": admin.save_on_top,
             "root_path": getattr(admin_site, "root_path", None),
         }
-        # DEV: Remove this when support for Django 4.2 has been dropped
-        if django.VERSION < (5, 0):
-            del context["log_entries"]
 
         mock_render.assert_called_once_with(
             request, admin.object_history_form_template, context
@@ -954,9 +944,6 @@ class AdminSiteTest(TestCase):
             "save_on_top": admin.save_on_top,
             "root_path": getattr(admin_site, "root_path", None),
         }
-        # DEV: Remove this when support for Django 4.2 has been dropped
-        if django.VERSION < (5, 0):
-            del context["log_entries"]
 
         mock_render.assert_called_once_with(
             request, admin.object_history_form_template, context
@@ -1018,9 +1005,6 @@ class AdminSiteTest(TestCase):
             "save_on_top": admin.save_on_top,
             "root_path": getattr(admin_site, "root_path", None),
         }
-        # DEV: Remove this when support for Django 4.2 has been dropped
-        if django.VERSION < (5, 0):
-            del context["log_entries"]
 
         mock_render.assert_called_once_with(
             request, admin.object_history_form_template, context
