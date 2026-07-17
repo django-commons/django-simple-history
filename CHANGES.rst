@@ -9,6 +9,9 @@ Unreleased
 
 **Breaking changes:**
 
+- Dropped support for Django 4.2, which reached end-of-life on 2026-04-07 (gh-1630)
+- Dropped support for Django 5.0, which reached end-of-life on 2025-04-02 (gh-1630)
+- Dropped support for Django 5.1, which reached end-of-life on 2025-12-03 (gh-1630)
 
 **Bug fixes:**
 
