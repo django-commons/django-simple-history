@@ -64,6 +64,7 @@ Documentation
    quick_start
    querying_history
    admin
+   mixins
    historical_model
    user_tracking
    signals
