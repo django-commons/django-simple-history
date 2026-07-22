@@ -9,6 +9,19 @@ Unreleased
 
 **Breaking changes:**
 
+
+**Bug fixes:**
+
+
+**Other changes:**
+
+
+
+3.13.0 (2026-07-22)
+-------------------
+
+**Breaking changes:**
+
 - Dropped support for Django 4.2, which reached end-of-life on 2026-04-07 (gh-1630)
 - Dropped support for Django 5.0, which reached end-of-life on 2025-04-02 (gh-1630)
 - Dropped support for Django 5.1, which reached end-of-life on 2025-12-03 (gh-1630)
@@ -17,9 +30,6 @@ Unreleased
 
 - Fixed the behavior of ``HistoricForeignKey`` when used together with
   ``prefetch_related()``, which caused some related objects to be missing (gh-1152)
-
-**Other changes:**
-
 
 
 3.12.0 (2026-06-22)
