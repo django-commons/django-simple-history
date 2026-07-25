@@ -12,6 +12,11 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed ``HistoricalQuerySet.latest_of_each()`` (and by extension ``as_of()``)
+  returning more than one record per object when several historical records share
+  the same ``history_date``; ties are now broken by the historical record's primary
+  key (gh-1602)
+
 
 **Other changes:**
 

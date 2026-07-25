@@ -61,11 +61,19 @@ class HistoricalQuerySet(QuerySet):
         # Subquery for finding the records that belong to the same history-tracked
         # object as the record from the outer query (identified by `_pk_attr`),
         # and that have a later `history_date` than the outer record.
+        # Records sharing the exact same `history_date` are ordered by the history
+        # table's primary key, so that colliding timestamps still resolve to a
+        # single latest record.
         # The very latest record of a history-tracked object should be excluded from
         # this query - which will make it included in the `~Exists` query below.
+        history_pk_attr = self.model._meta.pk.attname
         later_records = self.filter(
             Q(**{self._pk_attr: OuterRef(self._pk_attr)}),
-            Q(history_date__gt=OuterRef("history_date")),
+            Q(history_date__gt=OuterRef("history_date"))
+            | Q(
+                history_date=OuterRef("history_date"),
+                **{f"{history_pk_attr}__gt": OuterRef(history_pk_attr)},
+            ),
         )
 
         # Filter the records to only include those for which the `later_records`
