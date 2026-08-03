@@ -194,6 +194,20 @@ class TestPopulateHistory(TestCase):
         initial_history_record = PollWithExcludeFields.history.all()[0]
         self.assertEqual(initial_history_record.question, poll.question)
 
+    def test_populate_with_default_date(self):
+        date = datetime(2020, 7, 1)
+        Poll.objects.create(question="Will this populate?", pub_date=datetime.now())
+        Poll.history.all().delete()
+        management.call_command(
+            self.command_name,
+            auto=True,
+            default_date=date,
+            stdout=StringIO(),
+            stderr=StringIO(),
+        )
+        self.assertEqual(Poll.history.all().count(), 1)
+        self.assertEqual(Poll.history.all()[0].history_date, date)
+
 
 class TestCleanDuplicateHistory(TestCase):
     command_name = "clean_duplicate_history"
