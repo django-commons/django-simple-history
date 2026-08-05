@@ -61,9 +61,12 @@ class HistoricalQuerySet(QuerySet):
         # Subquery for finding the records that belong to the same history-tracked
         # object as the record from the outer query (identified by `_pk_attr`),
         # and that have a later `history_date` than the outer record.
-        # Records sharing the exact same `history_date` are ordered by the history
-        # table's primary key, so that colliding timestamps still resolve to a
-        # single latest record.
+        # Records sharing the exact same `history_date` are additionally ordered by
+        # the history table's primary key, so that colliding timestamps still resolve
+        # to exactly one record. With the default auto-incrementing `history_id` that
+        # tie-break is also the write order, but for a non-monotonic primary key
+        # (e.g. a UUID passed as `history_id_field`) it is only guaranteed to be
+        # stable, not to pick the most recently written record.
         # The very latest record of a history-tracked object should be excluded from
         # this query - which will make it included in the `~Exists` query below.
         history_pk_attr = self.model._meta.pk.attname
