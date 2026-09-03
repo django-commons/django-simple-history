@@ -1021,6 +1021,19 @@ class HistoricalObjectDescriptor:
         return self.model(**values)
 
 
+def _values_have_changed(old_value, new_value) -> bool:
+    """
+    Compares two field values for a diff, tolerating values (such as a
+    numpy array from a ``pgvector`` ``VectorField``) whose ``!=`` operator
+    returns an elementwise array instead of a single ``bool`` - which can't
+    be used directly in a boolean context.
+    """
+    result = old_value != new_value
+    if hasattr(result, "any"):
+        return bool(result.any())
+    return bool(result)
+
+
 class HistoricalChanges(ModelTypeHint):
     def diff_against(
         self,
@@ -1095,7 +1108,7 @@ class HistoricalChanges(ModelTypeHint):
             old_value = old_values[field]
             new_value = new_values[field]
 
-            if old_value != new_value:
+            if _values_have_changed(old_value, new_value):
                 field_meta = self._meta.get_field(field)
                 if foreign_keys_are_objs and isinstance(field_meta, ForeignKey):
                     # Set the fields to their related model objects instead of

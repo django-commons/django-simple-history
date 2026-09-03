@@ -12,6 +12,9 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed ``diff_against()`` raising a ``ValueError`` when comparing a field whose
+  values are array-like (e.g. a ``pgvector`` ``VectorField``) instead of diffing
+  them correctly (gh-1585)
 
 **Other changes:**
 

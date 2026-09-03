@@ -154,6 +154,41 @@ def get_fake_file(filename):
     return fake_file
 
 
+class _ArrayLikeNotEqualResult:
+    """
+    Stands in for what comparing two numpy arrays (or similar array-like
+    values, e.g. from a pgvector ``VectorField``) with ``!=`` actually
+    returns: an elementwise result, not a plain ``bool``. Using it in a
+    boolean context (e.g. a bare ``if``) raises ``ValueError``, exactly
+    like a real numpy array does.
+    """
+
+    def __init__(self, elements):
+        self._elements = list(elements)
+
+    def any(self):
+        return any(self._elements)
+
+    def __bool__(self):
+        raise ValueError(
+            "The truth value of an array with more than one element is "
+            "ambiguous. Use a.any() or a.all()"
+        )
+
+
+class ArrayLikeValue:
+    """A minimal, dependency-free stand-in for a numpy array field value."""
+
+    def __init__(self, *values):
+        self.values = values
+
+    def __ne__(self, other):
+        other_values = other.values if isinstance(other, ArrayLikeValue) else other
+        return _ArrayLikeNotEqualResult(
+            a != b for a, b in zip(self.values, other_values)
+        )
+
+
 class HistoricalRecordsTest(HistoricalTestCase):
     def assertDatetimesEqual(self, time1, time2):
         self.assertAlmostEqual(time1, time2, delta=timedelta(seconds=2))
@@ -719,6 +754,33 @@ class HistoricalRecordsTest(HistoricalTestCase):
         with self.assertNumQueries(0):
             delta = new_record.diff_against(old_record)
         self.assertNotIn("pub_date", delta.changed_fields)
+
+    def test_history_diff_handles_array_like_field_values(self):
+        """
+        A field whose values compare with `!=` in a way that returns an
+        array-like object (e.g. a numpy array from a pgvector
+        `VectorField`) instead of a plain bool used to raise `ValueError`
+        instead of being diffed correctly.
+
+        https://github.com/django-commons/django-simple-history/issues/1585
+        """
+        HistoricalPoll = Poll.history.model
+        old_record = HistoricalPoll(
+            id=1, question=ArrayLikeValue(1.0, 2.0, 3.0), pub_date=today, history_id=1
+        )
+        new_record = HistoricalPoll(
+            id=1, question=ArrayLikeValue(1.0, 2.0, 4.0), pub_date=today, history_id=2
+        )
+        delta = new_record.diff_against(old_record)
+        self.assertIn("question", delta.changed_fields)
+
+    def test_history_diff_array_like_field_values_unchanged(self):
+        HistoricalPoll = Poll.history.model
+        value = ArrayLikeValue(1.0, 2.0, 3.0)
+        old_record = HistoricalPoll(id=1, question=value, pub_date=today, history_id=1)
+        new_record = HistoricalPoll(id=1, question=value, pub_date=today, history_id=2)
+        delta = new_record.diff_against(old_record)
+        self.assertNotIn("question", delta.changed_fields)
 
     def test_history_diff_includes_changed_fields_of_base_model(self):
         r = InheritedRestaurant.objects.create(name="McDonna", serves_hot_dogs=False)
