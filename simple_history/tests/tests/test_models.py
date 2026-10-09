@@ -3145,3 +3145,15 @@ class HistoricOneToOneFieldTest(TestCase):
         )[0]
         pt1i = pt1h.instance
         self.assertEqual(pt1i.organization.name, "original")
+
+    def test_missing_reverse_historic_one_to_one(self):
+        """A missing reverse relation on a historic instance stays absent."""
+        org = TestOrganizationWithHistory.objects.create(name="lonely")
+        historic = TestOrganizationWithHistory.history.as_of(timezone.now()).get(
+            name="lonely"
+        )
+        self.assertFalse(hasattr(org, "historic_participant"))
+        self.assertFalse(hasattr(historic, "historic_participant"))
+        descriptor = TestOrganizationWithHistory.historic_participant
+        with self.assertRaises(descriptor.RelatedObjectDoesNotExist):
+            historic.historic_participant
