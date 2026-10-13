@@ -2539,6 +2539,75 @@ class ManyToManyTest(TestCase):
         )
         self.assertEqual(delta, expected_delta)
 
+    def test_add_from_reverse_side(self):
+        # Modifying the relation through the reverse accessor on the untracked
+        # model must record history on the tracked model (gh-1048)
+        self.place.pollwithmanytomany_set.add(self.poll)
+
+        self.assertEqual(self.poll.history.count(), 2)
+        m2m_record = self.poll.history.first()
+        self.assertEqual(m2m_record.history_type, "~")
+        self.assertEqual(m2m_record.places.count(), 1)
+        self.assertEqual(m2m_record.places.first().place, self.place)
+
+    def test_add_several_from_reverse_side(self):
+        poll_2 = PollWithManyToMany.objects.create(
+            question="what's new?", pub_date=today
+        )
+
+        self.place.pollwithmanytomany_set.add(self.poll, poll_2)
+
+        for poll in (self.poll, poll_2):
+            self.assertEqual(poll.history.count(), 2)
+            self.assertEqual(poll.history.first().places.count(), 1)
+
+    def test_remove_from_reverse_side(self):
+        self.poll.places.add(self.place)
+
+        self.place.pollwithmanytomany_set.remove(self.poll)
+
+        self.assertEqual(self.poll.history.count(), 3)
+        m2m_record = self.poll.history.first()
+        self.assertEqual(m2m_record.places.count(), 0)
+        self.assertEqual(m2m_record.prev_record.places.count(), 1)
+
+    def test_clear_from_reverse_side(self):
+        poll_2 = PollWithManyToMany.objects.create(
+            question="what's new?", pub_date=today
+        )
+        self.poll.places.add(self.place)
+        poll_2.places.add(self.place)
+
+        self.place.pollwithmanytomany_set.clear()
+
+        self.assertEqual(self.place.pollwithmanytomany_set.count(), 0)
+        for poll in (self.poll, poll_2):
+            self.assertEqual(poll.history.count(), 3)
+            self.assertEqual(poll.history.first().places.count(), 0)
+            self.assertEqual(poll.history.first().prev_record.places.count(), 1)
+
+    def test_set_from_reverse_side(self):
+        poll_2 = PollWithManyToMany.objects.create(
+            question="what's new?", pub_date=today
+        )
+        self.poll.places.add(self.place)
+
+        self.place.pollwithmanytomany_set.set([poll_2])
+
+        # self.poll was removed, poll_2 was added
+        self.assertEqual(self.poll.history.count(), 3)
+        self.assertEqual(self.poll.history.first().places.count(), 0)
+        self.assertEqual(poll_2.history.count(), 2)
+        self.assertEqual(poll_2.history.first().places.count(), 1)
+
+    def test_reverse_side_noop_does_not_create_history(self):
+        self.poll.places.add(self.place)
+
+        # Adding an already related object or clearing an empty relation changes
+        # nothing, so no history should be recorded
+        self.place.pollwithmanytomany_set.add(self.poll)
+        self.assertEqual(self.poll.history.count(), 2)
+
 
 @override_settings(**database_router_override_settings)
 class MultiDBExplicitHistoryUserIDTest(TestCase):

@@ -105,6 +105,7 @@ Authors
 - Matthew Somerville (`dracos <https://github.com/dracos>`_)
 - Mauricio de Abreu Antunes
 - Maxim Zemskov (`MaximZemskov <https://github.com/MaximZemskov>`_)
+- Meshack Tirop (`meshtirop1 <https://github.com/meshtirop1>`_)
 - Micah Denbraver
 - Michael England
 - Miguel Vargas
