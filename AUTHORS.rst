@@ -11,6 +11,7 @@ Maintainers
 Authors
 =======
 
+- Ahmet (`ANO3457 <https://github.com/ANO3457>`_)
 - Adnan Umer (`uadnan <https://github.com/uadnan>`_)
 - Aleksey Kladov
 - Alexander Anikeev

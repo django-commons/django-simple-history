@@ -8,6 +8,7 @@
 .venv/
 .python-version
 /.project
+temp_auto_push.bat
 /.pydevproject
 /.ve
 build/
@@ -19,4 +20,5 @@ test_files/
 venv/
 .DS_Store
 env
-.vscode
+.gitignore
+branch_structure.json
