@@ -66,6 +66,24 @@ class LatestOfEachTestCase(HistoricalTestCase):
             },
         )
 
+    def test_same_history_date_tiebreaker(self):
+        doc = RankedDocument.objects.create(rank=100)
+        doc.rank = 101
+        doc.save()
+
+        records = list(RankedDocument.history.filter(id=doc.id).order_by("history_id"))
+        self.assertEqual(len(records), 2)
+        r1, r2 = records
+
+        # Force identical history_date to simulate collision
+        same_date = r1.history_date
+        RankedDocument.history.filter(id=doc.id).update(history_date=same_date)
+
+        latest = list(RankedDocument.history.filter(id=doc.id).latest_of_each())
+        self.assertEqual(len(latest), 1)
+        self.assertEqual(latest[0].history_id, r2.history_id)
+        self.assertEqual(latest[0].rank, 101)
+
 
 class AsOfTestCase(TestCase):
     model = Document

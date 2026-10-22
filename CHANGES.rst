@@ -12,6 +12,9 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed ``latest_of_each()`` returning duplicate records when multiple historical
+  records share the exact same ``history_date`` by using ``history_id`` as a tiebreaker (gh-1602)
+
 
 **Other changes:**
 

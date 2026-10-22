@@ -65,7 +65,11 @@ class HistoricalQuerySet(QuerySet):
         # this query - which will make it included in the `~Exists` query below.
         later_records = self.filter(
             Q(**{self._pk_attr: OuterRef(self._pk_attr)}),
-            Q(history_date__gt=OuterRef("history_date")),
+            Q(history_date__gt=OuterRef("history_date"))
+            | Q(
+                history_date=OuterRef("history_date"),
+                history_id__gt=OuterRef("history_id"),
+            ),
         )
 
         # Filter the records to only include those for which the `later_records`
