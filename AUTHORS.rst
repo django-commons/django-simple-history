@@ -48,6 +48,7 @@ Authors
 - Erik van Widenfelt (`erikvw <https://github.com/erikvw>`_)
 - Fábio Capuano (`fabiocapsouza <https://github.com/fabiocapsouza>`_)
 - Filipe Pina (`@fopina <https://github.com/fopina>`_)
+- `Fire162 <https://github.com/Fire162>`_
 - Florian Eßer
 - François Martin (`martinfrancois <https://github.com/martinfrancois>`_)
 - Frank Sachsenheim
