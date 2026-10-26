@@ -294,6 +294,28 @@ To change the auto-generated HistoricalRecord models base class from
         changed_by = models.ForeignKey('auth.User')
         history = HistoricalRecords(bases=[RoutableModel])
 
+To use the same base class for every ``HistoricalRecords`` in a project,
+subclass ``HistoricalRecords`` with a different default and use the subclass
+in its place:
+
+.. code-block:: python
+
+    class ProjectHistoricalRecords(HistoricalRecords):
+        def __init__(self, *args, bases=(RoutableModel,), **kwargs):
+            super().__init__(*args, bases=bases, **kwargs)
+
+
+    class Poll(models.Model):
+        question = models.CharField(max_length=200)
+        history = ProjectHistoricalRecords()
+
+A model can still pass its own ``bases``. ``m2m_bases`` takes a default the
+same way, and ``register()`` accepts the subclass as ``records_class``:
+
+.. code-block:: python
+
+    register(User, records_class=ProjectHistoricalRecords)
+
 
 Excluded Fields
 --------------------------------
