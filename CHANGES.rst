@@ -12,6 +12,9 @@ Unreleased
 
 **Breaking changes:**
 
+- ``get_instance`` is now a reserved historical-model method name. A source field
+  with this name is no longer tracked, like the other documented reserved names.
+
 
 **Bug fixes:**
 
