@@ -507,7 +507,8 @@ class HistoricalRecords:
                 args=[getattr(self, opts.pk.attname), self.history_id],
             )
 
-        def get_instance(self):
+        def get_instance(self, *, using=None):
+            """Reconstruct this version, optionally selecting its source database."""
             attrs = {
                 field.attname: getattr(self, field.attname) for field in fields.values()
             }
@@ -520,8 +521,11 @@ class HistoricalRecords:
                     if not isinstance(model._meta.get_field(field), ManyToManyField)
                 ]
                 try:
+                    manager = (
+                        model.objects if using is None else model.objects.using(using)
+                    )
                     values = (
-                        model.objects.filter(pk=getattr(self, model._meta.pk.attname))
+                        manager.filter(pk=getattr(self, model._meta.pk.attname))
                         .values(*excluded_attnames)
                         .get()
                     )
@@ -530,6 +534,8 @@ class HistoricalRecords:
                 else:
                     attrs.update(values)
             result = model(**attrs)
+            if using is not None:
+                result._state.db = using
             # this is the only way external code could know an instance is historical
             setattr(result, SIMPLE_HISTORY_REVERSE_ATTR_NAME, self)
             return result
@@ -575,6 +581,7 @@ class HistoricalRecords:
                 model, self.fields_included(model)
             ),
             "instance": property(get_instance),
+            "get_instance": get_instance,
             "instance_type": model,
             "next_record": property(get_next_record),
             "prev_record": property(get_prev_record),

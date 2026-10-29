@@ -6,6 +6,9 @@ Unreleased
 
 **New features:**
 
+- Historical records expose ``get_instance(using=...)`` for explicit source-database
+  reconstruction, preserving the default ``instance`` property and separate-history routing.
+
 
 **Breaking changes:**
 

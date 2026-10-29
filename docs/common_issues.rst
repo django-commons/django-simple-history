@@ -199,6 +199,7 @@ thus, won't be tracked). The reserved historical field and method names are belo
 - ``history_user``
 - ``history_user_id``
 - ``instance``
+- ``get_instance``
 - ``instance_type``
 - ``next_record``
 - ``prev_record``
