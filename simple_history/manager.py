@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, TypeVar
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Exists, OuterRef, Q, QuerySet
@@ -8,12 +10,18 @@ from simple_history.utils import (
     get_change_reason_from_object,
 )
 
+if TYPE_CHECKING:
+    from .models import HistoricalChanges
+
+_HistoryModelT = TypeVar("_HistoryModelT", bound="HistoricalChanges")
+
+
 # when converting a historical record to an instance, this attribute is added
 # to the instance so that code can reverse the instance to its historical record
 SIMPLE_HISTORY_REVERSE_ATTR_NAME = "_history"
 
 
-class HistoricalQuerySet(QuerySet):
+class HistoricalQuerySet(QuerySet[_HistoryModelT]):
     """
     Enables additional functionality when working with historical records.
 
@@ -112,8 +120,10 @@ class HistoricalQuerySet(QuerySet):
                 setattr(historic, "_as_of", self._as_of)
 
 
-class HistoryManager(models.Manager):
-    def __init__(self, model, instance=None):
+class HistoryManager(models.Manager[_HistoryModelT]):
+    def __init__(
+        self, model: type[_HistoryModelT], instance: models.Model | None = None
+    ) -> None:
         super().__init__()
         self.model = model
         self.instance = instance

@@ -5,7 +5,7 @@ import warnings
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, ClassVar, Union
 
 from django.apps import apps
 from django.conf import settings
@@ -1029,6 +1029,9 @@ class HistoricalObjectDescriptor:
 
 
 class HistoricalChanges(ModelTypeHint):
+    # Both regular and M2M history factories retain their tracked model.
+    instance_type: ClassVar[type[models.Model]]
+
     def diff_against(
         self,
         old_history: "HistoricalChanges",

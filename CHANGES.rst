@@ -21,6 +21,10 @@ Unreleased
 
 **Other changes:**
 
+- Historical containers describe historical row types separately from a manager's
+  live ``instance``. ``get_history_model_metadata()`` exposes the existing regular
+  historical class through a typed metadata contract and distinguishes M2M rows.
+
 
 
 3.13.0 (2026-07-22)
