@@ -1,8 +1,49 @@
-from django.db import transaction
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+from django.db import models, transaction
 from django.db.models import Case, ForeignKey, ManyToManyField, Q, When
 from django.forms.models import model_to_dict
 
 from simple_history.exceptions import AlternativeManagerError, NotHistoricalModelError
+
+if TYPE_CHECKING:
+    from .models import HistoricalChanges
+
+
+@runtime_checkable
+class RegularHistoryMetadata(Protocol):
+    """Metadata supplied by the regular history-model factory, excluding M2M rows."""
+
+    @property
+    def instance_type(self) -> type[models.Model]:
+        """The tracked Django model whose fields the historical row snapshots."""
+        ...
+
+    @property
+    def tracked_fields(self) -> Sequence[models.Field]:
+        """The source fields selected by HistoricalRecords.fields_included()."""
+        ...
+
+    def get_default_history_user(self, instance: models.Model) -> object | None:
+        """Resolve the configured default user for one tracked instance."""
+        ...
+
+
+def get_history_model_metadata(
+    model: "type[HistoricalChanges]",
+) -> RegularHistoryMetadata:
+    """Return the regular historical class itself through its metadata contract.
+
+    Relationship snapshot classes have different metadata. Reject those M2M
+    classes, and other unsupported classes, with ``NotHistoricalModelError``.
+    The returned object is ``model``; no class or metadata copy is created.
+    """
+    if not isinstance(model, RegularHistoryMetadata):
+        raise NotHistoricalModelError(
+            f"{model} does not expose regular historical model metadata."
+        )
+    return model
 
 
 def update_change_reason(instance, reason):

@@ -1866,6 +1866,70 @@ class WarningOnAbstractModelWithInheritFalseTest(TestCase):
             )
 
 
+class HistoricalInstanceUsingTest(TestCase):
+    databases = {"default", "other"}
+
+    class DefaultRouter:
+        def db_for_read(self, model, **hints):
+            return "default"
+
+        db_for_write = db_for_read
+
+    def setUp(self):
+        self.default_date = datetime(2020, 1, 1)
+        self.other_date = datetime(2021, 1, 1)
+        self.default = PollWithExcludeFields.objects.using("default").create(
+            pk=1, question="default", pub_date=self.default_date
+        )
+        self.other = PollWithExcludeFields.objects.using("other").create(
+            pk=1, question="historical other", pub_date=self.other_date
+        )
+        # History intentionally lives on default while the source lives on other.
+        self.record = PollWithExcludeFields.history.using("default").get(
+            question="historical other"
+        )
+
+    def test_explicit_source_database_refills_excluded_fields(self):
+        with (
+            override_settings(DATABASE_ROUTERS=[self.DefaultRouter()]),
+            self.assertNumQueries(0, using="default"),
+            self.assertNumQueries(1, using="other"),
+        ):
+            restored = self.record.get_instance(using="other")
+        self.assertEqual(restored.question, "historical other")
+        self.assertEqual(restored.pub_date, self.other_date)
+        self.assertEqual(restored._state.db, "other")
+        self.assertIs(restored._history, self.record)
+        self.assertEqual(self.record._state.db, "default")
+        # Neither an explicit reconstruction nor the history row selects a new
+        # default source for the existing property.
+        self.assertEqual(self.record.instance.pub_date, self.default_date)
+        self.assertEqual(self.record.get_instance().pub_date, self.default_date)
+        self.assertIsNone(self.record.instance._state.db)
+
+    def test_deleted_explicit_source_does_not_refill_from_matching_default(self):
+        self.other.delete(using="other")
+        restored = self.record.get_instance(using="other")
+        self.assertIsNone(restored.pub_date)
+        self.assertEqual(restored.question, "historical other")
+        self.assertEqual(restored._state.db, "other")
+        self.assertEqual(self.record.instance.pub_date, self.default_date)
+
+    def test_explicit_source_without_excluded_fields_needs_no_read(self):
+        original = ModelWithHistoryUsingBaseModelDb.objects.using("other").create(
+            name="tracked"
+        )
+        record = original.history.using("other").get()
+        with (
+            self.assertNumQueries(0, using="default"),
+            self.assertNumQueries(0, using="other"),
+        ):
+            restored = record.get_instance(using="other")
+        self.assertEqual(restored.name, "tracked")
+        self.assertEqual(restored._state.db, "other")
+        self.assertEqual(record._state.db, "other")
+
+
 class MultiDBWithUsingTest(TestCase):
     """Asserts historical manager respects `using()` and the `using`
     keyword argument in `save()`.

@@ -566,3 +566,23 @@ You will see the many to many changes when diffing between two historical record
 
     # Output:
     # categories changed from [{'poll': 1, 'category': 1}, { 'poll': 1, 'category': 2}] to [{'poll': 1, 'category': 2}]
+
+
+Historical model metadata
+-------------------------
+
+``get_history_model_metadata()`` returns a regular historical model class through
+its metadata contract, preserving the class itself::
+
+    from simple_history.utils import get_history_model_metadata
+
+    metadata = get_history_model_metadata(Poll.history.model)
+    assert metadata is Poll.history.model
+    assert metadata.instance_type is Poll
+    field_names = [field.name for field in metadata.tracked_fields]
+
+The contract describes regular historical models. M2M relationship snapshot
+classes have different metadata and raise ``NotHistoricalModelError``.
+``HistoricalChanges.instance_type`` is common to both kinds of historical row.
+``HistoryManager.model`` describes historical rows; its optional ``instance`` is
+the live tracked model instance.

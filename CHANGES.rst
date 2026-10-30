@@ -6,14 +6,24 @@ Unreleased
 
 **New features:**
 
+- Historical records expose ``get_instance(using=...)`` for explicit source-database
+  reconstruction, preserving the default ``instance`` property and separate-history routing.
+
 
 **Breaking changes:**
+
+- ``get_instance`` is now a reserved historical-model method name. A source field
+  with this name is no longer tracked, like the other documented reserved names.
 
 
 **Bug fixes:**
 
 
 **Other changes:**
+
+- Historical containers describe historical row types separately from a manager's
+  live ``instance``. ``get_history_model_metadata()`` exposes the existing regular
+  historical class through a typed metadata contract and distinguishes M2M rows.
 
 
 

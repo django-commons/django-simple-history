@@ -10,6 +10,7 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils import timezone
 
 from simple_history.exceptions import AlternativeManagerError, NotHistoricalModelError
+from simple_history.models import HistoricalChanges
 from simple_history.tests.models import (
     BulkCreateManyToManyModel,
     Document,
@@ -33,12 +34,34 @@ from simple_history.utils import (
     bulk_update_with_history,
     get_history_manager_for_model,
     get_history_model_for_model,
+    get_history_model_metadata,
     get_m2m_field_name,
     get_m2m_reverse_field_name,
     update_change_reason,
 )
 
 User = get_user_model()
+
+
+class HistoryModelMetadataTestCase(unittest.TestCase):
+    def test_regular_metadata_is_the_existing_historical_class(self):
+        model = PollWithManyToMany.history.model
+        metadata = get_history_model_metadata(model)
+        self.assertIs(metadata, model)
+        self.assertIs(metadata.instance_type, PollWithManyToMany)
+        self.assertIs(metadata.tracked_fields, model.tracked_fields)
+        self.assertIsNone(metadata.get_default_history_user(PollWithManyToMany()))
+
+    def test_m2m_rows_keep_their_common_tracked_model_without_regular_metadata(self):
+        model = PollWithManyToMany.history.model.places.model
+        self.assertTrue(issubclass(model, HistoricalChanges))
+        self.assertIs(model.instance_type, PollWithManyToMany.places.through)
+        with self.assertRaisesRegex(NotHistoricalModelError, "regular historical"):
+            get_history_model_metadata(model)
+
+    def test_live_models_are_not_historical_metadata(self):
+        with self.assertRaises(NotHistoricalModelError):
+            get_history_model_metadata(PollWithManyToMany)
 
 
 class GetM2MFieldNamesTestCase(unittest.TestCase):

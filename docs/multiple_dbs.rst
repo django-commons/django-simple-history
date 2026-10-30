@@ -31,6 +31,27 @@ When interacting with manager methods, use ``db_manager()``:
 
 See the Django documentation for more information on how to interact with multiple databases.
 
+Reconstructing an Instance on a Specific Database
+------------------------------------------------
+
+A historical record's ``instance`` property keeps the normal database-router
+behavior, including when history is stored separately from its source model.
+When the source database is known explicitly, use ``get_instance(using=...)``:
+
+.. code-block:: python
+
+    record = Poll.history.using('history').latest()
+    poll = record.get_instance(using='source')
+    poll.save(using='source')
+
+The explicit alias selects the live values of fields excluded from history and
+binds the reconstructed instance's database state. Tracked values still come
+from the historical record. A deleted source leaves excluded fields at their
+model defaults, just as ``instance`` does when its routed source is absent.
+The history record's database does not change. With no ``using`` argument,
+``get_instance()`` and ``instance`` have the same behavior; the source alias is
+never inferred from the history database.
+
 Tracking User in a Separate Database
 ------------------------------------
 
