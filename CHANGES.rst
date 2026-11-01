@@ -15,6 +15,8 @@ Unreleased
 
 **Other changes:**
 
+- Documented how to give every ``HistoricalRecords`` in a project the same
+  ``bases`` with a subclass (gh-1574)
 
 
 3.13.0 (2026-07-22)
