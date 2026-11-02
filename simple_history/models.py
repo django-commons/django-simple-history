@@ -971,6 +971,26 @@ class HistoricReverseOneToOneDescriptor(
     def get_related_model(self):
         return self.related.related_model
 
+    def __get__(self, instance, cls=None):
+        try:
+            return super().__get__(instance, cls)
+        except ObjectDoesNotExist as exc:
+            # Django catches related_model.DoesNotExist. A historic queryset
+            # uses the historical model, so a missing row raises that model's
+            # DoesNotExist and hasattr() no longer treats the relation as absent.
+            if isinstance(exc, self.RelatedObjectDoesNotExist):
+                raise
+            queryset = self.get_queryset(instance=instance)
+            if isinstance(exc, queryset.model.DoesNotExist):
+                raise self.RelatedObjectDoesNotExist(
+                    "%s has no %s."
+                    % (
+                        instance.__class__.__name__,
+                        self.related.get_accessor_name(),
+                    )
+                ) from exc
+            raise
+
 
 class HistoricOneToOneField(models.OneToOneField):
     """

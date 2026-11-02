@@ -12,6 +12,9 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed ``hasattr`` on a missing reverse ``HistoricOneToOneField`` for a
+  historic instance. Django catches the live model's ``DoesNotExist``, but
+  the historic queryset raises the historical model's (gh-1588)
 
 **Other changes:**
 
