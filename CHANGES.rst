@@ -12,6 +12,8 @@ Unreleased
 
 **Bug fixes:**
 
+- ``clean_duplicate_history`` now also cleans up duplicate history entries for
+  instances that have since been deleted, instead of silently skipping them (gh-1436)
 
 **Other changes:**
 

@@ -479,6 +479,42 @@ class TestCleanDuplicateHistory(TestCase):
         )
         self.assertEqual(PollWithExcludeFields.history.all().count(), 1)
 
+    def test_auto_cleanup_deleted_instance(self):
+        """
+        History for an instance that's since been deleted should still get
+        its duplicate entries cleaned up, and the "Deleted" entry itself
+        should never be treated as a duplicate and removed.
+
+        https://github.com/django-commons/django-simple-history/issues/1436
+        """
+        p = Poll.objects.create(
+            question="Will this be deleted?", pub_date=datetime.now()
+        )
+        p.save()
+        self.assertEqual(Poll.history.all().count(), 2)
+
+        p.delete()
+        self.assertEqual(Poll.history.all().count(), 3)
+
+        out = StringIO()
+        management.call_command(
+            self.command_name, auto=True, stdout=out, stderr=StringIO()
+        )
+        self.assertEqual(
+            out.getvalue(),
+            "Removed 1 historical records for "
+            "<class 'simple_history.tests.models.Poll'>\n",
+        )
+        self.assertEqual(Poll.history.all().count(), 2)
+        self.assertEqual(
+            list(
+                Poll.history.order_by("history_date").values_list(
+                    "history_type", flat=True
+                )
+            ),
+            ["+", "-"],
+        )
+
 
 class TestCleanOldHistory(TestCase):
     command_name = "clean_old_history"

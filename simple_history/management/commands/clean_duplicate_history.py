@@ -93,13 +93,35 @@ class Command(populate_history.Command):
                     pk__in=(m_qs.values_list(model._meta.pk.name).distinct())
                 )
 
+            existing_pks = set()
             for o in model_query.iterator():
+                existing_pks.add(o.pk)
                 self._process_instance(o, model, stop_date=stop_date, dry_run=dry_run)
 
+            # Deleted instances don't show up in model_query, so clean their history separately.
+            pk_name = model._meta.pk.name
+            all_pks = set(model._base_manager.all().values_list(pk_name, flat=True))
+            deleted_pks = (
+                m_qs.order_by()  # drop default ordering, or DISTINCT on pk_name alone won't work
+                .values_list(pk_name, flat=True)
+                .distinct()
+                .exclude(**{f"{pk_name}__in": all_pks})
+            )
+            for pk in deleted_pks:
+                # "Deleted" marks a real event, not a duplicate - exclude it from dedup.
+                o_qs = history_model.objects.filter(**{pk_name: pk}).exclude(
+                    history_type="-"
+                )
+                self._process_history(o_qs, model, stop_date=stop_date, dry_run=dry_run)
+
     def _process_instance(self, instance, model, stop_date=None, dry_run=True):
-        entries_deleted = 0
         history = utils.get_history_manager_for_model(instance)
-        o_qs = history.all()
+        self._process_history(
+            history.all(), model, stop_date=stop_date, dry_run=dry_run
+        )
+
+    def _process_history(self, o_qs, model, stop_date=None, dry_run=True):
+        entries_deleted = 0
         if stop_date:
             # to compare last history match
             extra_one = o_qs.filter(history_date__lte=stop_date).first()
