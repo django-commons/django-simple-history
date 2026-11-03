@@ -60,12 +60,17 @@ class HistoricalQuerySet(QuerySet):
         """
         # Subquery for finding the records that belong to the same history-tracked
         # object as the record from the outer query (identified by `_pk_attr`),
-        # and that have a later `history_date` than the outer record.
+        # and that have a later `history_date` than the outer record (or a higher
+        # `history_id` if timestamps match).
         # The very latest record of a history-tracked object should be excluded from
         # this query - which will make it included in the `~Exists` query below.
         later_records = self.filter(
             Q(**{self._pk_attr: OuterRef(self._pk_attr)}),
-            Q(history_date__gt=OuterRef("history_date")),
+            Q(history_date__gt=OuterRef("history_date"))
+            | Q(
+                history_date=OuterRef("history_date"),
+                history_id__gt=OuterRef("history_id"),
+            ),
         )
 
         # Filter the records to only include those for which the `later_records`

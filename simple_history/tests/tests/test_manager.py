@@ -66,6 +66,17 @@ class LatestOfEachTestCase(HistoricalTestCase):
             },
         )
 
+    def test_identical_history_date(self):
+        doc = RankedDocument.objects.create(rank=10)
+        doc.rank = 20
+        doc.save()
+        now = datetime.now()
+        RankedDocument.history.filter(id=doc.id).update(history_date=now)
+
+        records = list(RankedDocument.history.filter(id=doc.id).latest_of_each())
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0].rank, 20)
+
 
 class AsOfTestCase(TestCase):
     model = Document
