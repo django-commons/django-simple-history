@@ -95,7 +95,7 @@ Bulk update was introduced with Django 2.2. We can use the utility function
     >>> for obj in objs: obj.question = 'Duplicate Questions'
     >>> bulk_update_with_history(objs, Poll, ['question'], batch_size=500)
     >>> Poll.objects.first().question
-    'Duplicate Question``
+    'Duplicate Questions'
 
 If your models require the use of an alternative model manager (usually because the
 default manager returns a filtered set), you can specify which manager to use with the
