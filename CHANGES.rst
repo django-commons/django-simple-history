@@ -3,6 +3,7 @@ Changes
 
 Unreleased
 ----------
+- Added ``--default-date`` option to ``populate_history`` command (gh-688)
 
 **New features:**
 
