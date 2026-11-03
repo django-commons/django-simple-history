@@ -93,7 +93,7 @@ class Command(populate_history.Command):
                     pk__in=(m_qs.values_list(model._meta.pk.name).distinct())
                 )
 
-            for o in model_query.iterator():
+            for o in model_query.iterator(chunk_size=2000):
                 self._process_instance(o, model, stop_date=stop_date, dry_run=dry_run)
 
     def _process_instance(self, instance, model, stop_date=None, dry_run=True):
