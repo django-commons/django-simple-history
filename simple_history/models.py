@@ -692,10 +692,32 @@ class HistoricalRecords:
         """
         return utils.get_change_reason_from_object(instance)
 
-    def m2m_changed(self, instance, action, attr, pk_set, reverse, **_):
+    def m2m_changed(
+        self, instance, action, attr, pk_set, reverse, model, using=None, **_
+    ):
         if not getattr(settings, "SIMPLE_HISTORY_ENABLED", True):
             return
         if hasattr(instance, "skip_history_when_saving"):
+            return
+
+        if reverse:
+            # The relation was modified through the reverse accessor, so
+            # `instance` belongs to the other side of the relation and the
+            # tracked objects are the ones in `model` that were added, removed or
+            # cleared. Those are identified by `pk_set`, except for a clear,
+            # where they have to be looked up before the rows are deleted.
+            manager = model._default_manager.using(using)
+            if action == "pre_clear":
+                instance._history_reverse_m2m_pks = list(
+                    manager.filter(**{attr: instance}).values_list("pk", flat=True)
+                )
+            elif action == "post_clear":
+                pks = instance.__dict__.pop("_history_reverse_m2m_pks", [])
+                for tracked_instance in manager.filter(pk__in=pks):
+                    self.create_historical_record(tracked_instance, "~", using=using)
+            elif action in ("post_add", "post_remove"):
+                for tracked_instance in manager.filter(pk__in=pk_set):
+                    self.create_historical_record(tracked_instance, "~", using=using)
             return
 
         if action in ("post_add", "post_remove", "post_clear"):

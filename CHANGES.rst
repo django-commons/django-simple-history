@@ -12,6 +12,8 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed ``AttributeError`` when a many-to-many relation listed in ``m2m_fields``
+  was modified through the reverse accessor of the related model (gh-1048)
 
 **Other changes:**
 
