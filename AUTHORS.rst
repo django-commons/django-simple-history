@@ -99,6 +99,7 @@ Authors
 - Marco Sirabella
 - Marek Podešva (`mr-mare <https://github.com/mr-mare>`_)
 - Mark Davidoff
+- Marti Markov (`martimarkov <https://github.com/martimarkov>`_)
 - Martin Bachwerk
 - Marty Alchin
 - Matheus Cansian (`mscansian <https://github.com/mscansian>`_)
