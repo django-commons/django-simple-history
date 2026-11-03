@@ -66,6 +66,31 @@ class LatestOfEachTestCase(HistoricalTestCase):
             },
         )
 
+    def test_records_with_colliding_history_dates(self):
+        """Two records sharing a `history_date` should still yield one latest."""
+        document = RankedDocument.objects.create(rank=10)
+        document.rank = 11
+        document.save()
+
+        # Two rapid writes can land on the same `history_date` (e.g. a save()
+        # immediately followed by an m2m change, or a frozen clock in tests).
+        earliest = RankedDocument.history.filter(id=document.pk).earliest("history_id")
+        RankedDocument.history.filter(id=document.pk).update(
+            history_date=earliest.history_date
+        )
+
+        queryset = RankedDocument.history.latest_of_each()
+        self.assertEqual(queryset.count(), 1)
+        self.assertRecordValues(
+            queryset.get(),
+            RankedDocument,
+            {
+                "rank": 11,
+                "id": document.pk,
+                "history_type": "~",
+            },
+        )
+
 
 class AsOfTestCase(TestCase):
     model = Document
