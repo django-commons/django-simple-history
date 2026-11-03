@@ -18,6 +18,10 @@ from django.utils.encoding import force_str
 from django.utils.html import mark_safe
 from django.utils.text import capfirst
 from django.utils.translation import gettext as _
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.utils.html import format_html
+
 
 from .manager import HistoricalQuerySet, HistoryManager
 from .models import HistoricalChanges
@@ -373,3 +377,224 @@ class SimpleHistoryAdmin(admin.ModelAdmin):
         return getattr(
             settings, "SIMPLE_HISTORY_ENFORCE_HISTORY_MODEL_PERMISSIONS", False
         )
+
+
+class HistoricalRevertMixin:
+    """
+    Mixin for Historical Admin classes to add revert/restore functionality.
+    Allows restoring deleted objects from historical records.
+
+    This mixin works with any model that uses django-simple-history.
+    It provides an admin action to restore deleted objects from their historical records.
+
+    Usage:
+        from simple_history.admin import HistoricalRevertMixin
+
+        @admin.register(MyModel.history.model)
+        class HistoricalMyModelAdmin(HistoricalRevertMixin, admin.ModelAdmin):
+            list_display = ("field1", "history_date", "history_type", "revert_button")
+            list_filter = ("history_type",)  # Recommended for easy filtering
+
+        IMPORTANT: HistoricalRevertMixin MUST come before ModelAdmin in the inheritance list!
+
+    Features:
+        - Restores deleted objects from historical records
+        - Validates that selected records are deletion records
+        - Prevents duplicate restoration
+        - Provides detailed feedback messages
+        - Works with any model automatically
+
+    Example:
+        1. Navigate to the Historical admin page
+        2. Filter by history_type = "-" (deletions)
+        3. Select the records you want to restore
+        4. Choose "Revert selected deleted objects" from actions
+        5. Click "Go"
+    """
+
+    def get_actions(self, request):
+        """Override to ensure our revert action is included."""
+        actions = super().get_actions(request)
+        if hasattr(self, "revert_deleted_object"):
+            desc = getattr(
+                self.revert_deleted_object,
+                "short_description",
+                "Revert selected deleted objects",
+            )
+            actions["revert_deleted_object"] = (
+                self.revert_deleted_object,
+                "revert_deleted_object",
+                desc,
+            )
+        return actions
+
+    def changelist_view(self, request, extra_context=None):
+        """Override changelist view to handle restore action via GET parameter."""
+        if "revert_id" in request.GET:
+            return self.handle_revert_from_button(request)
+        return super().changelist_view(request, extra_context)
+
+    def handle_revert_from_button(self, request):
+        """Handle the revert action triggered by the button."""
+        revert_id = request.GET.get("revert_id")
+
+        try:
+            historical_record = self.model.objects.get(pk=revert_id)
+        except self.model.DoesNotExist:
+            self.message_user(
+                request,
+                "Historical record not found.",
+                messages.ERROR,
+            )
+            return HttpResponseRedirect(request.path)
+
+        # Check if this is a deletion record
+        if historical_record.history_type != "-":
+            self.message_user(
+                request,
+                "This is not a deletion record and cannot be restored.",
+                messages.WARNING,
+            )
+            return HttpResponseRedirect(request.path)
+
+        # Get the original model class
+        original_model = historical_record.instance_type
+
+        # Check if object already exists
+        if original_model.objects.filter(pk=historical_record.id).exists():
+            self.message_user(
+                request,
+                "This object has already been restored.",
+                messages.WARNING,
+            )
+            return HttpResponseRedirect(request.path)
+
+        try:
+            # Restore the object with its original ID
+            restored_instance = historical_record.instance
+            # Explicitly set the ID to match the historical record
+            restored_instance.pk = historical_record.id
+            restored_instance.id = historical_record.id
+            restored_instance.save(force_insert=True)
+
+            model_name = self.model._meta.verbose_name
+            self.message_user(
+                request,
+                f"Successfully restored {model_name}: {historical_record} (ID: {restored_instance.pk})",
+                messages.SUCCESS,
+            )
+        except Exception as e:
+            self.message_user(
+                request,
+                f"Error restoring object: {str(e)}",
+                messages.ERROR,
+            )
+
+        # Redirect back to clean URL
+        return HttpResponseRedirect(request.path)
+
+    def revert_button(self, obj):
+        """
+        Display a revert button for deleted objects.
+        Add this to list_display to show the button.
+        """
+        if obj.history_type == "-":
+            # Get the original model class
+            original_model = obj.instance_type
+
+            # Check if object already exists
+            if original_model.objects.filter(pk=obj.id).exists():
+                return format_html(
+                    '<span style="color: #666;">✓ Already Restored</span>'
+                )
+
+            # Use a relative URL with query parameter (simpler and always works)
+            url = f"?revert_id={obj.pk}"
+
+            return format_html(
+                '<a class="button" href="{}" style="background-color: #417690; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; display: inline-block;">🔄 Restore</a>',
+                url,
+            )
+        return format_html('<span style="color: #999;">-</span>')
+
+    revert_button.short_description = "Restore"
+    revert_button.allow_tags = True
+
+    def revert_deleted_object(self, request, queryset):
+        """
+        Revert (restore) deleted objects from historical records.
+
+        This action:
+        - Only processes deletion records (history_type == "-")
+        - Checks if objects already exist before restoring
+        - Handles errors gracefully
+        - Provides detailed feedback about the operation
+
+        Args:
+            request: The HTTP request object
+            queryset: QuerySet of historical records to process
+        """
+        restored_count = 0
+        already_exists_count = 0
+        not_deleted_count = 0
+        errors_count = 0
+
+        for historical_record in queryset:
+            # Check if this is a deletion record
+            if historical_record.history_type != "-":
+                not_deleted_count += 1
+                continue
+
+            # Get the original model class from the historical record
+            original_model = historical_record.instance_type
+
+            # Check if the object already exists (was already restored)
+            if original_model.objects.filter(pk=historical_record.id).exists():
+                already_exists_count += 1
+                continue
+
+            try:
+                # Restore the object with its original ID
+                restored_instance = historical_record.instance
+                # Explicitly set the ID to match the historical record
+                restored_instance.pk = historical_record.id
+                restored_instance.id = historical_record.id
+                restored_instance.save(force_insert=True)
+                restored_count += 1
+            except Exception as e:
+                errors_count += 1
+                self.message_user(
+                    request,
+                    f"Error restoring object {historical_record.id}: {str(e)}",
+                    messages.ERROR,
+                )
+
+        # Provide feedback to the user
+        model_name = queryset.model._meta.verbose_name_plural if queryset else "objects"
+
+        if restored_count > 0:
+            self.message_user(
+                request,
+                f"Successfully restored {restored_count} {model_name}.",
+                messages.SUCCESS,
+            )
+        if already_exists_count > 0:
+            self.message_user(
+                request,
+                f"{already_exists_count} {model_name} already exist and were not restored.",
+                messages.WARNING,
+            )
+        if not_deleted_count > 0:
+            self.message_user(
+                request,
+                f"{not_deleted_count} selected record(s) are not deletion records.",
+                messages.WARNING,
+            )
+        if errors_count > 0:
+            self.message_user(
+                request,
+                f"Failed to restore {errors_count} {model_name}.",
+                messages.ERROR,
+            )
+
+    revert_deleted_object.short_description = "Revert selected deleted objects"
