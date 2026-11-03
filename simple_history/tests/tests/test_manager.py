@@ -66,6 +66,21 @@ class LatestOfEachTestCase(HistoricalTestCase):
             },
         )
 
+    def test_same_history_date_returns_latest_record(self):
+        doc = RankedDocument.objects.create(rank=10)
+        doc.rank = 20
+        doc.save()
+
+        # Update all historical records to have identical history_date
+        now = datetime.now()
+        RankedDocument.history.filter(id=doc.id).update(history_date=now)
+
+        latest = RankedDocument.history.filter(id=doc.id).latest_of_each()
+        self.assertEqual(latest.count(), 1)
+        record = latest.first()
+        self.assertEqual(record.rank, 20)
+        self.assertEqual(record.history_type, "~")
+
 
 class AsOfTestCase(TestCase):
     model = Document

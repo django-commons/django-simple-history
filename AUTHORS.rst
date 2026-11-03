@@ -11,6 +11,7 @@ Maintainers
 Authors
 =======
 
+- Abhinav Maurya (`Fire162 <https://github.com/Fire162>`_)
 - Adnan Umer (`uadnan <https://github.com/uadnan>`_)
 - Aleksey Kladov
 - Alexander Anikeev
