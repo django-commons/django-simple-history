@@ -102,7 +102,7 @@ class Command(populate_history.Command):
         o_qs = history.all()
         if stop_date:
             # to compare last history match
-            extra_one = o_qs.filter(history_date__lte=stop_date).first()
+            extra_one = o_qs.filter(history_date__lt=stop_date).first()
             o_qs = o_qs.filter(history_date__gte=stop_date)
         else:
             extra_one = None

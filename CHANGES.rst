@@ -12,6 +12,9 @@ Unreleased
 
 **Bug fixes:**
 
+- Preserve changed historical records exactly at the time cutoff in
+  ``clean_duplicate_history`` (gh-1663)
+
 
 **Other changes:**
 

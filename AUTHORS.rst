@@ -154,6 +154,8 @@ Authors
 - `Trent Holliday <https://github.com/trumpet2012>`_
 - Denys Rozum (`denusbtw <https://github.com/denusbtw>`_)
 
+- Ilya Khalafi (`IlyaKhalafi <https://github.com/IlyaKhalafi>`_)
+
 Background
 ==========
 

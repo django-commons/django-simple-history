@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from io import StringIO
+from unittest.mock import patch
 
 from django.core import management
 from django.test import TestCase
@@ -196,6 +197,31 @@ class TestPopulateHistory(TestCase):
 
 
 class TestCleanDuplicateHistory(TestCase):
+    def test_cleanup_preserves_changed_record_at_time_boundary(self):
+        boundary = datetime(2026, 1, 1, 12)
+        poll = Poll.objects.create(question="Old value", pub_date=boundary)
+        poll.history.update(history_date=boundary - timedelta(minutes=1))
+        poll.question = "Changed value"
+        poll._history_date = boundary
+        poll.save()
+
+        with patch(
+            "simple_history.management.commands.clean_duplicate_history.timezone.now",
+            return_value=boundary + timedelta(minutes=50),
+        ):
+            management.call_command(
+                self.command_name,
+                "tests.poll",
+                minutes=50,
+                stdout=StringIO(),
+                stderr=StringIO(),
+            )
+
+        self.assertEqual(
+            list(poll.history.values_list("question", flat=True)),
+            ["Changed value", "Old value"],
+        )
+
     command_name = "clean_duplicate_history"
     command_error = (management.CommandError, SystemExit)
 
