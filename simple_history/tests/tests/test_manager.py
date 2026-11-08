@@ -7,7 +7,15 @@ from django.test import TestCase, override_settings, skipUnlessDBFeature
 
 from simple_history.manager import SIMPLE_HISTORY_REVERSE_ATTR_NAME
 
-from ..models import Choice, Document, Poll, RankedDocument
+from ..models import (
+    Choice,
+    Document,
+    ManyToManyModelOther,
+    ModelWithExcludedManyToMany,
+    Poll,
+    PollWithExcludeFields,
+    RankedDocument,
+)
 from .utils import HistoricalTestCase
 
 User = get_user_model()
@@ -122,6 +130,39 @@ class AsOfTestCase(TestCase):
         """
         as_of_list = list(self.model.history.as_of(self.now - timedelta(days=1)))
         self.assertEqual(as_of_list[0].changed_by, self.obj.changed_by)
+
+
+class AsOfExcludedFieldsTestCase(TestCase):
+    def test_excluded_fields_are_fetched_in_one_query(self):
+        pub_date = datetime(2030, 1, 1)
+        for i in range(5):
+            PollWithExcludeFields.objects.create(question=str(i), pub_date=pub_date)
+        deleted_pk = PollWithExcludeFields.objects.first().pk
+        PollWithExcludeFields.objects.filter(pk=deleted_pk).delete()
+
+        with self.assertNumQueries(2):
+            polls = list(PollWithExcludeFields.history.as_of(datetime.now()))
+        self.assertEqual(len(polls), 4)
+        for p in polls:
+            self.assertEqual(p.pub_date, pub_date)
+
+        with self.assertNumQueries(2):
+            records = list(PollWithExcludeFields.history.as_instances())
+        self.assertEqual(len(records), 5)
+        for p in records:
+            self.assertEqual(p.pub_date, None if p.pk == deleted_pk else pub_date)
+
+    def test_only_many_to_many_excluded(self):
+        model = ModelWithExcludedManyToMany.objects.create(name="old")
+        model.other.add(ManyToManyModelOther.objects.create(name="other"))
+        before = datetime.now()
+        model.name = "new"
+        model.save()
+
+        with self.assertNumQueries(1):
+            [old] = ModelWithExcludedManyToMany.history.as_of(before)
+        self.assertEqual(old.name, "old")
+        self.assertEqual(model.history.as_of(before).name, "old")
 
 
 class AsOfTestCaseWithoutSetUp(TestCase):

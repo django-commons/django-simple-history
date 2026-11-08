@@ -12,9 +12,13 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed historical instances showing current values when only ManyToManyFields
+  are in ``excluded_fields`` (gh-1671)
 
 **Other changes:**
 
+- ``as_of()`` and ``as_instances()`` fetch the values of excluded fields in one
+  query instead of one query per record (gh-1671)
 - Documented how to give every ``HistoricalRecords`` in a project the same
   ``bases`` with a subclass (gh-1574)
 

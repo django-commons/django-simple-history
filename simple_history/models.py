@@ -507,28 +507,15 @@ class HistoricalRecords:
                 args=[getattr(self, opts.pk.attname), self.history_id],
             )
 
-        def get_instance(self):
+        def get_instance(self, excluded_values=None):
             attrs = {
                 field.attname: getattr(self, field.attname) for field in fields.values()
             }
             if self._history_excluded_fields:
-                # We don't add ManyToManyFields to this list because they may cause
-                # the subsequent `.get()` call to fail. See #706 for context.
-                excluded_attnames = [
-                    model._meta.get_field(field).attname
-                    for field in self._history_excluded_fields
-                    if not isinstance(model._meta.get_field(field), ManyToManyField)
-                ]
-                try:
-                    values = (
-                        model.objects.filter(pk=getattr(self, model._meta.pk.attname))
-                        .values(*excluded_attnames)
-                        .get()
-                    )
-                except ObjectDoesNotExist:
-                    pass
-                else:
-                    attrs.update(values)
+                pk = getattr(self, model._meta.pk.attname)
+                if excluded_values is None:
+                    excluded_values = utils.get_excluded_field_values(type(self), [pk])
+                attrs.update(excluded_values.get(pk, {}))
             result = model(**attrs)
             # this is the only way external code could know an instance is historical
             setattr(result, SIMPLE_HISTORY_REVERSE_ATTR_NAME, self)
