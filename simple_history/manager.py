@@ -6,6 +6,7 @@ from django.utils import timezone
 from simple_history.utils import (
     get_app_model_primary_key_name,
     get_change_reason_from_object,
+    get_excluded_field_values,
 )
 
 # when converting a historical record to an instance, this attribute is added
@@ -106,7 +107,17 @@ class HistoricalQuerySet(QuerySet):
             and self._as_instances
             and isinstance(self._result_cache[0], self.model)
         ):
-            self._result_cache = [item.instance for item in self._result_cache]
+            excluded_values = None
+            if self.model._history_excluded_fields:
+                excluded_values = get_excluded_field_values(
+                    self.model,
+                    [getattr(item, self._pk_attr) for item in self._result_cache],
+                )
+            # Same as `item.instance`, with the excluded fields fetched in one query
+            get_instance = self.model.instance.fget
+            self._result_cache = [
+                get_instance(item, excluded_values) for item in self._result_cache
+            ]
             for item in self._result_cache:
                 historic = getattr(item, SIMPLE_HISTORY_REVERSE_ATTR_NAME)
                 setattr(historic, "_as_of", self._as_of)

@@ -50,6 +50,26 @@ def get_history_model_for_model(model):
     return get_history_manager_for_model(model).model
 
 
+def get_excluded_field_values(history_model, pks):
+    """
+    Return a dict mapping each of ``pks`` to the current values of the fields
+    excluded from ``history_model``. Deleted objects are left out.
+    """
+    model = history_model.instance_type
+    # ManyToManyFields can't be loaded this way, see #706
+    attnames = [
+        model._meta.get_field(name).attname
+        for name in history_model._history_excluded_fields
+        if not isinstance(model._meta.get_field(name), ManyToManyField)
+    ]
+    if not attnames:
+        return {}
+    objs = model.objects.only(*attnames).in_bulk(pks)
+    return {
+        pk: {name: getattr(obj, name) for name in attnames} for pk, obj in objs.items()
+    }
+
+
 def get_app_model_primary_key_name(model):
     """Return the primary key name for a given app model."""
     if isinstance(model._meta.pk, ForeignKey):
