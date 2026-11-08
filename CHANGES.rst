@@ -15,6 +15,9 @@ Unreleased
 
 **Other changes:**
 
+- Reuse the history manager class instead of creating a new one on every
+  access of the history manager, which made each save about 25% slower
+  (gh-1669)
 - Documented how to give every ``HistoricalRecords`` in a project the same
   ``bases`` with a subclass (gh-1574)
 

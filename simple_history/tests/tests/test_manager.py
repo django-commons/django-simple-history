@@ -13,6 +13,13 @@ from .utils import HistoricalTestCase
 User = get_user_model()
 
 
+class HistoryDescriptorTestCase(TestCase):
+    def test_manager_class_is_reused(self):
+        poll = Poll(question="what's up?", pub_date=datetime.now())
+        self.assertIs(type(Poll.history), type(Poll.history))
+        self.assertIs(type(poll.history), type(Poll.history))
+
+
 class LatestOfEachTestCase(HistoricalTestCase):
     def test_filtered_instances_are_as_expected(self):
         document1 = RankedDocument.objects.create(rank=10)

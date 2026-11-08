@@ -264,8 +264,8 @@ class HistoryDescriptor:
         self.model = model
         self.queryset_class = queryset
         self.manager_class = manager
+        # from_queryset() builds a new class, too slow to repeat on every access
+        self._manager = manager.from_queryset(queryset)
 
     def __get__(self, instance, owner):
-        return self.manager_class.from_queryset(self.queryset_class)(
-            self.model, instance
-        )
+        return self._manager(self.model, instance)
