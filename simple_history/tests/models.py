@@ -629,6 +629,11 @@ class ModelWithFkToModelWithHistoryUsingBaseModelDb(models.Model):
     history = HistoricalRecords(use_base_model_db=True)
 
 
+class ModelWithManyToManyUsingBaseModelDb(models.Model):
+    places = models.ManyToManyField("Place")
+    history = HistoricalRecords(m2m_fields=[places], use_base_model_db=True)
+
+
 ###############################################################################
 #
 # Inheritance examples
