@@ -675,6 +675,31 @@ class AdminSiteTest(TestCase):
         response = admin.history_view(request, str(poll.id))
         self.assertInHTML(expected, response.content.decode())
 
+    def test_history_view_pagination_delta_changes(self):
+        """
+        The last record on a page is diffed against the first one on the next page.
+        """
+        poll = Poll.objects.create(question="what?", pub_date=today)
+        for i in range(3):
+            poll.question = f"change_{i}"
+            poll.save()
+
+        class CustomSimpleHistoryAdmin(SimpleHistoryAdmin):
+            history_list_per_page = 2
+
+        admin = CustomSimpleHistoryAdmin(Poll, AdminSite())
+        self.login(superuser=True)
+        request = RequestFactory().get("/")
+        request.user = self.user
+
+        with patch("simple_history.admin.render") as mock_render:
+            admin.history_view(request, str(poll.id))
+
+        records = mock_render.call_args[0][2]["page_obj"].object_list
+        self.assertEqual(len(records), 2)
+        for record in records:
+            self.assertEqual(len(record.history_delta_changes), 1)
+
     def test_response_change_change_history_setting_off(self):
         """
         Test the response_change method that it works with a _change_history

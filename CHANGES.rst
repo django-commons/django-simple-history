@@ -12,6 +12,8 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed the admin history view not showing the changes of the last record on
+  each page when the history is paginated (gh-1667)
 
 **Other changes:**
 
