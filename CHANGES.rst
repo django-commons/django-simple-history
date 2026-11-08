@@ -12,6 +12,8 @@ Unreleased
 
 **Bug fixes:**
 
+- Fixed m2m history records being written to the default database when
+  ``use_base_model_db=True`` and the model lives in another database (gh-1665)
 
 **Other changes:**
 

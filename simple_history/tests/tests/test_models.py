@@ -84,6 +84,7 @@ from ..models import (
     ModelWithFkToModelWithHistoryUsingBaseModelDb,
     ModelWithHistoryInDifferentDb,
     ModelWithHistoryUsingBaseModelDb,
+    ModelWithManyToManyUsingBaseModelDb,
     ModelWithMultipleNoDBIndex,
     ModelWithSingleNoDBIndexUnique,
     MultiOneToOne,
@@ -1971,6 +1972,18 @@ class MultiDBWithUsingTest(TestCase):
                 .all()
                 .order_by("history_date")
             ],
+        )
+
+    def test_multidb_with_using_and_m2m(self):
+        place = Place.objects.using(self.db_name).create(name="Here")
+        model = ModelWithManyToManyUsingBaseModelDb.objects.using(self.db_name).create()
+        model.places.add(place)
+
+        self.assertFalse(model.history.exists())
+        record = model.history.using(self.db_name).first()
+        self.assertEqual(record.history_type, "~")
+        self.assertEqual(
+            [row.place_id for row in record.places.using(self.db_name)], [place.pk]
         )
 
 

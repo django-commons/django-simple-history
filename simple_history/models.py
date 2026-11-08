@@ -692,7 +692,7 @@ class HistoricalRecords:
         """
         return utils.get_change_reason_from_object(instance)
 
-    def m2m_changed(self, instance, action, attr, pk_set, reverse, **_):
+    def m2m_changed(self, instance, action, attr, pk_set, reverse, using=None, **_):
         if not getattr(settings, "SIMPLE_HISTORY_ENABLED", True):
             return
         if hasattr(instance, "skip_history_when_saving"):
@@ -700,7 +700,7 @@ class HistoricalRecords:
 
         if action in ("post_add", "post_remove", "post_clear"):
             # It should be safe to ~ this since the row must exist to modify m2m on it
-            self.create_historical_record(instance, "~")
+            self.create_historical_record(instance, "~", using=using)
 
     def create_historical_record_m2ms(self, history_instance, instance):
         for field in history_instance._history_m2m_fields:
@@ -715,7 +715,9 @@ class HistoricalRecords:
             insert_rows = []
 
             through_field_name = utils.get_m2m_field_name(field)
-            rows = through_model.objects.filter(**{through_field_name: instance})
+            rows = through_model.objects.using(instance._state.db).filter(
+                **{through_field_name: instance}
+            )
             rows = rows.select_related(*through_model_fk_field_names)
             for row in rows:
                 insert_row = {"history": history_instance}
@@ -731,7 +733,9 @@ class HistoricalRecords:
                 instance=instance,
                 field=field,
             )
-            created_rows = m2m_history_model.objects.bulk_create(insert_rows)
+            created_rows = m2m_history_model.objects.using(
+                history_instance._state.db
+            ).bulk_create(insert_rows)
             post_create_historical_m2m_records.send(
                 sender=m2m_history_model,
                 created_rows=created_rows,
