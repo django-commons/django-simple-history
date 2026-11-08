@@ -87,7 +87,11 @@ class SimpleHistoryAdmin(admin.ModelAdmin):
                 for record in page_obj.object_list:
                     setattr(record, history_list_entry, value_for_entry(record))
 
-        self.set_history_delta_changes(request, page_obj)
+        records = list(page_obj)
+        if page_obj.has_next():
+            # The page's last record is diffed against the first one on the next page
+            records.append(historical_records[page_obj.end_index()])
+        self.set_history_delta_changes(request, records)
 
         content_type = self.content_type_model_cls.objects.get_for_model(
             get_user_model()
